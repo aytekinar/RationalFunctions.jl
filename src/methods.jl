@@ -14,7 +14,7 @@ roots(r::RationalFunction)  = (rnew = reduce(r); (roots(rnew.num), roots(rnew.de
 
 variable{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}) =
   (variable(U, T), variable(V, T), Conj{S})
-variable{T,S,U,V}(r::RationalFunction{Var{T},S,U,V})      =
+variable{T,S,U,V}(r::RationalFunction{Var{T},S,U,V})            =
   (variable(U, T), variable(V, T), S)
 
 num(r::RationalFunction)    = r.num
@@ -33,7 +33,8 @@ zero{T,S}(r::RationalFunction{T,S})                         =
   RationalFunction(zero(r.num), one(r.den), S)
 
 ## Comparison
-hash{T,S}(r::RationalFunction{T,Conj{S}}, h::UInt) = hash(S, hash(r.den, hash(r.num, h)))
+hash{T,S}(r::RationalFunction{Var{T},Conj{S}}, h::UInt)             =
+  hash(T, hash(S, hash(coeffs(r.num), hash(coeffs(r.den), h))))
 
 =={T,S}(r1::RationalFunction{T,S}, r2::RationalFunction{T,S})       =
   r1.num * r2.den == r1.den * r2.num
@@ -48,8 +49,8 @@ eps{T<:AbstractFloat}(::Type{Complex{T}}) = Base.eps(T)
 eps{T}(::Type{T})                         = zero(T)
 
 function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Var{T},Conj{S},U1,V1},
-  r2::RationalFunction{Var{T},Conj{S},U2,V2}; rtol::Real = sqrt(eps(promote_type(U1,V2,U2,V2))),
-  atol::Real = 0)
+  r2::RationalFunction{Var{T},Conj{S},U2,V2};
+  rtol::Real = sqrt(eps(promote_type(U1,V2,U2,V2))), atol::Real = 0)
   p1 = r1.num * r2.den
   p2 = r1.den * d2.num
 
