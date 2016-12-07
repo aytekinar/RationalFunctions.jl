@@ -52,7 +52,7 @@ function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Var{T},Conj{S},U1,V1},
   r2::RationalFunction{Var{T},Conj{S},U2,V2};
   rtol::Real = sqrt(eps(promote_type(U1,V2,U2,V2))), atol::Real = 0)
   p1 = r1.num * r2.den
-  p2 = r1.den * d2.num
+  p2 = r1.den * r2.num
 
   isapprox(coeffs(p1), coeffs(p2); rtol = rtol, atol = atol)
 end
@@ -82,7 +82,7 @@ function _funceval(r::RationalFunction, x::Number)
   result
 end
 
-_funceval(r::RationalFunction, X) = map(x->_funceval(r, x), X)
+_funceval(r::RationalFunction, X) = map(r, X)
 
 @compat (r::RationalFunction)(x::Number)                    = _funceval(r, x)
 @compat (r::RationalFunction{T,Conj{true}}){T}(x::Number)   = _funceval(r, conj(x))
@@ -183,9 +183,13 @@ end
 
 ## Basic operations between `Number`s
 ==(r::RationalFunction, n::Number)              = ==(r.num, n*r.den)
+==(n::Number, r::RationalFunction)              = ==(r, n)
 isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{T,S,U,V}, n::Z;
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) =
   isapprox(coeffs(r.num), coeffs(n*r.den); rtol = rtol, atol = atol)
+isapprox{T,S,U,V,Z<:Number}(n::Z, r::RationalFunction{T,S,U,V};
+  rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) =
+  isapprox(r, n; rtol = rtol, atol = atol)
 
 +{T,S}(r::RationalFunction{T,S}, n::Number) = RationalFunction(r.num + n*r.den, copy(r.den), S)
 +(n::Number, r::RationalFunction)           = +(r, n)
@@ -213,6 +217,7 @@ function =={T,S}(r::RationalFunction{Var{T},S}, p::Poly)
   T ≠ p.var && return false
   return r.num == p*r.den
 end
+==(p::Poly, r::RationalFunction) = ==(r, p)
 
 function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Var{T},S,U,V}, p::Poly{Z};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0)
@@ -222,6 +227,9 @@ function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Var{T},S,U,V}, p::Poly{
   end
   isapprox(coeffs(r.num), coeffs(p*r.den); rtol = rtol, atol = atol)
 end
+isapprox{T,S,U,V,Z<:Number}(p::Poly{Z}, r::RationalFunction{Var{T},S,U,V};
+  rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) =
+  isapprox(r, p; rtol = rtol, atol = atol)
 
 function +{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
   if T ≠ p.var
