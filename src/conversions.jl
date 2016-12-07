@@ -18,7 +18,6 @@ convert{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}, n::Number) =
 promote_rule{T,S,U,V,Y<:Number}(::Type{RationalFunction{Var{T},Conj{S},U,V}},
   ::Type{Poly{Y}}) = RationalFunction{Var{T},Conj{S},promote_type(U,Y),V}
 function convert{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}, p::Poly)
-  @assert T == p.var "RationalFunction{Var{$T}}(p::Poly): p.var = $(p.var) (≠ $T)"
   newpoly = convert(Poly{U}, p)
   RationalFunction(newpoly, Poly([one(V)], T), Conj{S})
 end
