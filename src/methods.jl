@@ -56,9 +56,11 @@ function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Var{T},Conj{S},U1,V1},
   isapprox(coeffs(p1), coeffs(p2); rtol = rtol, atol = atol)
 end
 
-isapprox{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},S1}, r2::RationalFunction{Var{T2},S2};
-  rtol::Real = 0, atol::Real = 0) =
-  error("r1≈r2: r1 and r2 have different variables (($T1,$S1) vs ($T2,$S2))")
+function isapprox{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}},
+  r2::RationalFunction{Var{T2},Conj{S2}}; rtol::Real = 0, atol::Real = 0)
+  warn("r1≈r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+  throw(DomainError())
+end
 
 # Function evaluation
 function _funceval(r::RationalFunction, x::Number)
@@ -102,7 +104,10 @@ end
 
 ## Derivative
 function derivative{T,S}(r::RationalFunction{T,S}, n::Int = 1)
-  @assert n ≥ 0 "derivative(::RationalFunction, n): n must be non-negative"
+  if n < 0
+    warn("derivative(r, n): `n` must be non-negative")
+    throw(DomainError())
+  end
   n == 0 && return copy(r)
   num   = polyder(r.num)*r.den - r.num*polyder(r.den)
   den   = r.den*r.den
@@ -137,8 +142,10 @@ function +{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T
   RationalFunction(num, den, Conj{S})
 end
 
-+{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},S1}, r2::RationalFunction{Var{T2},S2}) =
-  error("r1+r2: r1 and r2 have different variables (($T1,$S1) vs ($T2,$S2))")
+function +{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
+  warn("r1+r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+  throw(DomainError())
+end
 
 function *{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T},Conj{S}})
   num = r1.num * r2.num
@@ -146,8 +153,10 @@ function *{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T
   RationalFunction(num, den, Conj{S})
 end
 
-*{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},S1}, r2::RationalFunction{Var{T2},S2}) =
-  error("r1*r2: r1 and r2 have different variables (($T1,$S1) vs ($T2,$S2))")
+function *{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
+  warn("r1*r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+  throw(DomainError())
+end
 
 dot(r1::RationalFunction, r2::RationalFunction) = *(r1, r2)
 
@@ -157,8 +166,10 @@ function /{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T
   RationalFunction(num, den, Conj{S})
 end
 
-/{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},S1}, r2::RationalFunction{Var{T2},S2}) =
-  error("r1/r2: r1 and r2 have different variables (($T1,$S1) vs ($T2,$S2))")
+function /{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
+  warn("r1/r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+  throw(DomainError())
+end
 
 -{T,S}(r::RationalFunction{T,S})                = RationalFunction(-r.num, copy(r.den), S)
 
@@ -204,18 +215,27 @@ end
 
 function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Var{T},S,U,V}, p::Poly{Z};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0)
-  @assert T == p.var "r≈p: p.var = $(p.var) (≠ $T)"
+  if T ≠ p.var
+    warn("r≈p: `r` ($T) and `p` ($(p.var)) have different variables")
+    throw(DomainError())
+  end
   isapprox(coeffs(r.num), coeffs(p*r.den); rtol = rtol, atol = atol)
 end
 
 function +{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
-  @assert T == p.var "r+p: p.var = $(p.var) (≠ $T)"
+  if T ≠ p.var
+    warn("r+p: `r` ($T) and `p` ($(p.var)) have different variables")
+    throw(DomainError())
+  end
   RationalFunction(r.num + p*r.den, r.den, S)
 end
 +(p::Poly, r::RationalFunction) = +(r, p)
 
 function *{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
-  @assert T == p.var "r*p: p.var = $(p.var) (≠ $T)"
+  if T ≠ p.var
+    warn("r*p: `r` ($T) and `p` ($(p.var)) have different variables")
+    throw(DomainError())
+  end
   RationalFunction(p*r.num, r.den, S)
 end
 *(p::Poly, r::RationalFunction)           = *(r, p)
@@ -223,12 +243,18 @@ dot(r::RationalFunction, p::Poly)         = *(r, p)
 dot(p::Poly, r::RationalFunction)         = *(r, p)
 
 function /{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
-  @assert T == p.var "r/p: p.var = $(p.var) (≠ $T)"
+  if T ≠ p.var
+    warn("r/p: `r` ($T) and `p` ($(p.var)) have different variables")
+    throw(DomainError())
+  end
   RationalFunction(r.num, p*r.den, S)
 end
 
 function /{T,S}(p::Poly, r::RationalFunction{Var{T},S})
-  @assert T == p.var "p/r: p.var = $(p.var) (≠ $T)"
+  if T ≠ p.var
+    warn("p/r: `p` ($(p.var)) and `r` ($T) have different variables")
+    throw(DomainError())
+  end
   RationalFunction(p*r.den, r.num, S)
 end
 
@@ -247,14 +273,14 @@ end
 
 ## Solve
 function solve(lhs::RationalFunction, rhs::Number = 0)
-  lhs == rhs        && error("solve(lhs,rhs): lhs and rhs are equal.")
+  lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   rhs == zero(rhs)  && return zeros(lhs)
   isinf(rhs)        && return poles(lhs)
   zeros(lhs - rhs)
 end
 
 function solve(lhs::RationalFunction, rhs::Poly)
-  lhs == rhs        && error("solve(lhs,rhs): lhs and rhs are equal.")
+  lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   rhs == zero(rhs)  && return zeros(lhs)
   zeros(lhs - rhs)
 end
@@ -263,8 +289,12 @@ solve(lhs::PolyLike, rhs::RationalFunction) = solve(rhs, lhs)
 
 function solve{T,S}(lhs::RationalFunction{Var{T},Conj{S}},
   rhs::RationalFunction{Var{T},Conj{S}})
-  lhs == rhs        && error("solve(lhs,rhs): lhs and rhs are equal.")
+  lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   zeros(lhs - rhs)
 end
-solve{T1,S1,T2,S2}(lhs::RationalFunction{Var{T1},S1}, rhs::RationalFunction{Var{T2},S2}) =
-  error("solve(lhs,rhs): lhs and rhs have different variables (($T1,$S1) vs ($T2,$S2))")
+
+function solve{T1,S1,T2,S2}(lhs::RationalFunction{Var{T1},Conj{S1}},
+  rhs::RationalFunction{Var{T2},Conj{S2}})
+  warn("solve(lhs,rhs): `lhs` ($T1,Conj{$S1}) and `rhs` ($T2,Conj{$S2}) have different variables")
+  throw(DomainError())
+end
