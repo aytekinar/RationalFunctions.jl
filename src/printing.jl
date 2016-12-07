@@ -1,4 +1,4 @@
-summary{T,S,U,V}(::RationalFunction{Var{T},Conj{S},U,V})   = "RF{$T,$S,$U,$V}"
+summary{T,S,U,V}(::RationalFunction{Var{T},Conj{S},U,V})  = "RF{Var{$T},Conj{$S},$U,$V}"
 
 # Compact representations
 function _compact{T,S}(stream, ::MIME"text/plain", r::RationalFunction{Var{T},Conj{S}})
