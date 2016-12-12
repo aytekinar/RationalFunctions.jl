@@ -40,7 +40,7 @@ export  RationalFunction,
         variable,
         # Other functions
         derivative,
-        # TODO: funcfit,
+        funcfit,
         poles,
         solve
 

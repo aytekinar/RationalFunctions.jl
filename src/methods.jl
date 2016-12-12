@@ -89,6 +89,36 @@ _funceval(r::RationalFunction, X) = map(r, X)
 @compat (r::RationalFunction{T,Conj{true}}){T}(x::Real)     = _funceval(r, x)
 @compat (r::RationalFunction)(X)                            = _funceval(r, X)
 
+function funcfit(x, y, m::Int, n::Int, var::SymbolLike = :x)
+  if length(x) ≠ length(y)
+    warn("funcfit(x, y, m, n, var): length(x) ≠ length(y)")
+    throw(DomainError())
+  elseif m < 0 || n < 0
+    warn("funcfit(x, y, m, n, var): `m` and `n` must be non-negative")
+    throw(DomainError())
+  elseif m + n + 1 > length(x)
+    warn("funcfit(x, y, m, n, var): not enough data points for given degrees")
+    throw(DomainError())
+  end
+
+  T   = promote_type(eltype(x), eltype(y))
+
+  A1  = T[ x[i]^j        for i in 1:length(x), j in 0:m]
+  A2  = T[-x[i]^j * y[i] for i in 1:length(x), j in 1:n]
+  A   = [A1 A2]
+
+  b   = A \ y
+
+  RationalFunction(b[1:m+1], [1; b[m+2:end]], var)
+end
+
+funcfit(x, y, m::Int, var::SymbolLike = :x) = funcfit(x, y, m, 0, var)
+function funcfit(x, y, var::SymbolLike = :x)
+  n, r  = divrem(length(x), 2)
+  m     = n - 1 + r
+  funcfit(x, y, m, n, var)
+end
+
 # Mathematical operations (always return temporaries for correctness of the results)
 ## Inversion
 inv{T,S}(r::RationalFunction{T,S})  = RationalFunction(copy(r.den), copy(r.num), S)

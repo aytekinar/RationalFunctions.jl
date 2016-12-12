@@ -86,15 +86,34 @@ r3  = RationalFunction(3p2, 5p1)
 @test_approx_eq(r2(1), 0)
 @test_approx_eq(r3(1), Inf)
 
+@test_approx_eq(r1(realinput), fill(3/5, size(realinput)))
+@test_approx_eq(r1(imaginput), fill(3/5, size(realinput)))
+
 # Uncomment the following then Polynomials.jl fixes #78 (and, update REQUIRE)
 # @test_approx_eq(r1(Inf), 3/5)
 # @test_approx_eq(r2(Inf), 0)
 # @test_approx_eq(r3(Inf), Inf)
 
-## Inversion, transpose, conjugation
-@test_approx_eq(r1(realinput), fill(3/5, size(realinput)))
-@test_approx_eq(r1(imaginput), fill(3/5, size(realinput)))
+## Function fitting
+x   = -2:1E-1:2
+y   = Float64[x^2 + 3x + 5 for x in x]
+r1  = funcfit(x, y, 2)
 
+@test_throws DomainError funcfit(x, y, -1, 2)
+@test_throws DomainError funcfit(x, y, 2, -1)
+@test_throws DomainError funcfit(x, y, length(x))
+@test_throws DomainError funcfit(x, [1; y], 2)
+
+@test coeffs(r1)[1] ≈ [5, 3, 1]
+@test y ≈ r1(x)
+
+x   = 0:1E-1:4
+y   = Float64[x^2 + 3x + √x + 5cos(x) for x in x]
+r2  = funcfit(x, y)
+
+@test y ≈ r2(x)
+
+## Inversion, transpose, conjugation
 r1 = RationalFunction(p1, p2)
 r2 = inv(r1)
 r3 = transpose(r1)
