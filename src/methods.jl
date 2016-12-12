@@ -10,7 +10,7 @@ coeffs(r::RationalFunction) = (coeffs(r.num), coeffs(r.den))
 
 degree(r::RationalFunction) = (degree(r.num), degree(r.den))
 
-roots(r::RationalFunction)  = (rnew = reduce(r); (roots(rnew.num), roots(rnew.den)))
+roots(r::RationalFunction)  = (roots(r.num), roots(r.den))
 
 variable{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}) =
   (variable(U, T), variable(V, T), Conj{S})
