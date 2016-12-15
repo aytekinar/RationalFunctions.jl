@@ -9,10 +9,16 @@ functions in [Julia][julia-link].
 ## Build Status and Code Coverage
 
 -  Build status: [![Build Status][build-img]][build-link]
+-  Compatibility: [![Julia v0.4][jl-0-4-img]][jl-pkg-link]
+  [![Julia v0.5][jl-0-5-img]][jl-pkg-link] [![Julia v0.6][jl-0-6-img]][jl-pkg-link]
 -  Code coverage: [![Coveralls][ca-img]][ca-link] [![Codecov][cc-img]][cc-link]
 
 [build-img]:  https://travis-ci.org/aytekinar/RationalFunctions.jl.svg?branch=master
 [build-link]: https://travis-ci.org/aytekinar/RationalFunctions.jl
+[jl-0-4-img]: http://pkg.julialang.org/badges/RationalFunctions_0.4.svg
+[jl-0-5-img]: http://pkg.julialang.org/badges/RationalFunctions_0.5.svg
+[jl-0-6-img]: http://pkg.julialang.org/badges/RationalFunctions_0.6.svg
+[jl-pkg-link]: http://pkg.julialang.org/?pkg=RationalFunctions
 [ca-img]: https://coveralls.io/repos/github/aytekinar/RationalFunctions.jl/badge.svg?branch=master
 [ca-link]: https://coveralls.io/github/aytekinar/RationalFunctions.jl?branch=master
 [cc-img]: https://codecov.io/gh/aytekinar/RationalFunctions.jl/branch/master/graph/badge.svg
