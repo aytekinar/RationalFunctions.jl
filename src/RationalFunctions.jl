@@ -2,6 +2,7 @@ module RationalFunctions
 
 using Compat
 using Polynomials
+using RecipesBase
 
 # Import conversion and promotion functions for overloading
 import Base: convert, promote_rule
@@ -49,5 +50,6 @@ include("type.jl")
 include("printing.jl")
 include("conversions.jl")
 include("methods.jl")
+include("plotting.jl")
 
 end # module

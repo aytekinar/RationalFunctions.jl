@@ -222,3 +222,23 @@ sln = solve(r1, r2)
 @test sln ≈ [(3-√29)/2, (3+√29)/2] || sln ≈ [(3+√29)/2, (3-√29)/2]
 @test_throws DomainError solve(r2, r3)
 @test_throws ErrorException solve(r1, r1)
+
+# Plotting via `RecipesBase` and `Plots`
+using Plots
+gr(display = false)
+
+x       = -2:1E-1:2
+xinit   = x[5:5:end]
+yinit1  = map(x->x^2+3x+5, xinit)
+yinit2  = map(x->x^2+2, xinit)
+init1   = map((x,y)->(x,y), xinit, yinit1)
+init2   = map((x,y)->(x,y), xinit, yinit2)
+
+r1      = funcfit(xinit, yinit1, 2)
+r2      = funcfit(xinit, yinit2, 2)
+
+@test isa(plot(r1, x, xinit, yinit1), Plots.Plot)
+@test isa(plot(r1, x, label = "r1(x)"), Plots.Plot)
+@test isa(plot!(r2, x, init2, label = "r2(x)"), Plots.Plot)
+
+savefig("test-plot.png")
