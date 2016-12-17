@@ -89,10 +89,9 @@ r3  = RationalFunction(3p2, 5p1)
 @test_approx_eq(r1(realinput), fill(3/5, size(realinput)))
 @test_approx_eq(r1(imaginput), fill(3/5, size(realinput)))
 
-# Uncomment the following then Polynomials.jl fixes #78 (and, update REQUIRE)
-# @test_approx_eq(r1(Inf), 3/5)
-# @test_approx_eq(r2(Inf), 0)
-# @test_approx_eq(r3(Inf), Inf)
+@test_approx_eq(r1(Inf), 3/5)
+@test_approx_eq(r2(Inf), 0)
+@test_approx_eq(r3(Inf), Inf)
 
 ## Function fitting
 x   = -2:1E-1:2
