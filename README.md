@@ -30,40 +30,7 @@ functions in [Julia][julia-link].
 package extends `Polynomials`, and tries to provide a set of basic mathematical
 functonality between `Number`s, `Poly`s and `RationalFunction` objects.
 
-The package is in its early phase and provides the below functionality:
-
-- [x] **Construction.** `RationalFunction` object creation from `Number`s, `Vector`s
-  and `Poly`s, and `Poly` object creation from `RationalFunction`s (where appropriate),
-- [x] **Conversion and promotion.** Conversion and promotion rules among `Number`s,
-  `Poly`s and `RationalFunction`s (where appropriate),
-- [x] **Display.** `MIME("text/plain")`- and `MIME("text/latex")`-aware object display,
-- [x] **Convenience.** Some convenience functions such as `coeffs`, `degree`, `roots`,
-  `variable`, `num`, `den`, `zeros` and `poles`,
-- [x] **Identity.** Methematical identities `one` and `zero`,
-- [x] **Comparison.** Comparison related functions `hash`, `==`, `isequal` and
-  `isapprox`,
-- [x] **Evaluation.** Function evaluation at a given `Number` or collections of
-  `Number`s,
-- [x] **Math.** Basic operations such as `inv`, `transpose`, `conj`, `derivative`,
-  `reduce`, `+`, `-`, `*`, and `/`,
-- [x] **Solution.** Solution of `lhs = rhs` through `solve(lhs, rhs)` where one
-  of `lhs` and `rhs` is a `RationalFunction` whereas the other is a `Number`, `Poly`
-  or `RationalFunction`,
-- [ ] **Function fitting.** Function fitting (of corresponding degrees) to a given
-  collection of `(input,output)` pairs, and,
-- [ ] **Plotting.** Function plotting for a given collection of input values (through
-  [`RecipesBase`][recipes-link]).
-
-Any comments are appreciated, especially on
-
-- [ ] how to implement `NaN`s and `Inf`s, and `isnan` and `isinf`, and,
-- [ ] **Zero functions.** When `num = zero(num)` or `den = Inf`.
-
-[recipes-link]: https://github.com/JuliaPlots/RecipesBase.jl
-
 ## Basic Usage
-
-### Construction
 
 The easiest way to construct a `RationalFunction` object is to call its constructor
 with `Poly` objects. If a `Poly` object is not provided, you need to provide the
@@ -75,6 +42,10 @@ As it is implemented now, `RationalFunction` objects do not allow for mixing
 different variables --- a `RationalFunction` object's variable is the combination
 of both its variable name (*i.e.*, `:x`) and its conjugation property (*i.e.*,
 `RationalFunctions.Conj{false}`).
+
+For more information, check the documentation with `?RationalFunction` command.
+You will also see the interface, *i.e.*, exported methods of the package under
+`See also:` section. You can read their documentation in a similar way.
 
 #### Example
 
@@ -93,11 +64,17 @@ f(s) = num(s)/den(s), where,
 num(s) is Poly(-2 + 5⋅s - 4⋅s^2 + s^3), and,
 den(s) is Poly(-6 + 11⋅s - 6⋅s^2 + s^3).
 
+julia> r1(1+1im)
+0.2 - 0.39999999999999997im
+
 julia> # Construct a rational function from numpoly, denpoly (conjugated input)
 julia> r2 = RationalFunction(numpoly, denpoly, RationalFunctions.Conj{true})
 f(s̄) = num(s̄)/den(s̄), where,
 num(s) is Poly(-2 + 5⋅s - 4⋅s^2 + s^3), and,
 den(s) is Poly(-6 + 11⋅s - 6⋅s^2 + s^3).
+
+julia> r2(1+1im)
+0.2 + 0.39999999999999997im
 
 julia> # Construct a rational function from coefficients
 julia> r3 = RationalFunction([1,2,3],[2,4,6],:s)
@@ -127,6 +104,10 @@ den(s) is Poly(-6 + 11⋅s - 6⋅s^2 + s^3).
 
 Some functions exist for your convenience when working with `RationalFunction`s.
 
+Please read the corresponding documentation in Julia by issuing `?coeffs`, `?degree`,
+`?roots`, `?variable`, `?num`, `?den`, `?zeros`, `?poles`, `?funcfit`, `?derivative`,
+`?reduce` or `?solve`.
+
 #### Example
 
 ```julia
@@ -141,8 +122,8 @@ julia> coeffs(r1) # Tuple of vector of coefficients of num(r1) and den(r1)
 julia> degree(r1) # Tuple of degrees of num(r1) and den(r1)
 (3,3)
 
-julia> roots(r1) # Tuple of zeros and poles of reduce(r1)
-([1.0],[3.0])
+julia> roots(r1) # Tuple of roots of num(r1) and den(r1)
+(Complex{Float64}[2.0+0.0im,1.0+2.83263e-8im,1.0-2.83263e-8im],[3.0,2.0,1.0])
 
 julia> variable(r1) # Tuple of variables of num(r1), den(r1) and conjugation property
 (Poly(s),Poly(s),RationalFunctions.Conj{false})
@@ -360,12 +341,51 @@ julia> solve(r1 * denpoly, 5*numpoly)
           2.0+0.0im
 ```
 
-## Note
+### Plotting of rational function outputs for given inputs
 
-The package (unfortunately) lacks
+`RationalFunctions` provides plotting recipes through [`RecipesBase`][recipes-link]
+for `Real`-coefficient `RationalFuncion` objects for `Real` inputs.
 
-- Proper documentation, and,
-- Unit testing.
+#### Example
 
-However, a proper documentation (at least as `?command` in Julia) will be provided
-soon.
+The example below is run on a Linux machine with `Julia 0.5` having [`Plots`][plots-link]
+as the frontend and [`GR`][gr-link] as the backend.
+
+If you would like to use another (set of) package(s) for plotting, just disregard
+the below code excerpt, and rely on the corresponding package's documentation and
+the function evaluation implemented in `RationalFunctions`.
+
+```julia
+julia> using Plots; # Plots as the frontend, which is compatible with RecipesBase
+
+julia> gr(); # GR as the backend
+
+julia> x = -2:1E-1:2;
+
+julia> xinit = x[5:5:end]; # x-values for function fitting
+
+julia> yinit1 = map(x->x^2+3x+5, xinit); # y-values for function fitting
+
+julia> yinit2 = map(x->x^2+2, xinit); # y-values for function fitting
+
+julia> init1 = map((x,y)->(x,y), xinit, yinit1);
+
+julia> init2 = map((x,y)->(x,y), xinit, yinit2);
+
+julia> r1 = funcfit(xinit, yinit1, 2);
+
+julia> r2 = funcfit(xinit, yinit2, 2);
+
+julia> plot(r1, x, label = "r1(x)"); # plot r1 vs x
+
+julia> plot!(r2, x, init2, label = "r2(x)"); # plot r2 vs x with given (x,y)-pairs scattered
+
+julia> # plot!(r2, x, xinit, yinit2, label = "r2(x)") # same as above
+```
+
+![Figure obtained from the above code excerpt.][test-plot]
+
+[recipes-link]: https://github.com/JuliaPlots/RecipesBase.jl
+[plots-link]: https://github.com/tbreloff/Plots.jl
+[gr-link]: https://github.com/jheinen/GR.jl
+[test-plot]: https://github.com/aytekinar/RationalFunctions.jl/releases/download/v0.0.2/test-plot-linux-0.5.png
