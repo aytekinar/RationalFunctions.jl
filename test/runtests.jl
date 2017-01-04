@@ -17,6 +17,8 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test isequal(px/qx, RationalFunction(px, qx, Conj{false}))
 
 @test_throws DomainError RationalFunction(px, ps)
+@test_throws DomainError RationalFunction(px, ps, Conj{true})
+@test_throws DomainError px./ps
 @test_throws DomainError px/ps
 
 @test isequal(RationalFunction(coeffs(px), qx), RationalFunction(px, coeffs(qx)))
@@ -28,6 +30,13 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test isequal(RationalFunction(1, 1), RationalFunction([1], [1]))
 @test isa(RationalFunction(1), RationalFunction{Var{:x}, Conj{false}, Int, Int})
 @test isa(RationalFunction([1, 2.], 's', Conj{true}), RationalFunction{Var{:s}, Conj{true}, Float64, Float64})
+
+## `Poly` construction from `RationalFunction`s
+r1 = px/qx
+r2 = px/Poly([4])
+
+@test isapprox(coeffs(Poly(r2)), coeffs(px/4))
+@test_throws DomainError Poly(r1)
 
 # Conversion tests
 v1 = [1, 2, 3]
@@ -55,6 +64,14 @@ r1 = RationalFunction([ 0., 1, 2], :x)
 r2 = copy(r1)
 
 @test isequal(r1, r2) && !is(r1, r2)
+
+## Variable-related
+@test eltype(r1) == eltype(typeof(r1)) == (eltype(r1.num), eltype(r1.den))
+@test variable(r1) == variable(typeof(r1)) == (variable(r1.num), variable(r1.den), Conj{false})
+
+## Identities
+@test one(r1) == one(typeof(r1)) == RationalFunction(one(r1.num), one(r1.den))
+@test zero(r1) == zero(typeof(r1)) == RationalFunction(zero(r1.num), one(r1.den))
 
 ## Comparison
 r1 = RationalFunction([ 0., 1, 2], :x)
@@ -142,6 +159,7 @@ result  = (polyder(p3)*p4 - p3*polyder(p4))/p4^2
 r1 = RationalFunction(p1, p1)
 @test derivative(r1, 0) == r1
 @test derivative(r1) == 0
+@test derivative(RationalFunction(1, p3), 2) == RationalFunction(2, poly([1; 1; 1]))
 @test_throws DomainError derivative(r1, -1)
 
 ## Mathematical operations
@@ -189,6 +207,9 @@ r1  = RationalFunction(n*[1, 1], [1, 1])
 
 @test n == r1 == n
 @test n+1 ≠ r1 ≠ n+2
+
+@test n ≈ r1 ≈ n
+@test n + 0*1im ≈ r1 ≈ n + 0*1im
 
 r1  = RationalFunction([-1, 1], [1, 1]) # r1 = (x-1)/(x+1)
 
@@ -241,3 +262,5 @@ r2      = funcfit(xinit, yinit2, 2)
 @test isa(plot!(r2, x, init2, label = "r2(x)"), Plots.Plot)
 
 savefig("test-plot.png")
+
+@test_throws DomainError plot(r1, x, xinit, [yinit1; 1])
