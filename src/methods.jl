@@ -6,20 +6,78 @@ eltype{T,S,U,V}(::Type{RationalFunction{T,S,U,V}}) = (U, V)
 eltype{T,S,U,V}(r::RationalFunction{T,S,U,V})      = (U, V)
 
 # Convenience functions
+"""
+    coeffs(r::RationalFunction) -> Tuple{Vector,Vector}
+
+Return the coefficient vectors of the numerator and denominator polynomials of `r`.
+
+See also: `num`, `den`, `degree`.
+"""
 coeffs(r::RationalFunction) = (coeffs(r.num), coeffs(r.den))
 
+"""
+    degree(r::RationalFunction) -> Tuple{Int,Int}
+
+Return the degrees of the numerator and denominator polynomials of `r`.
+
+See also: `num`, `den`, `coeffs`.
+"""
 degree(r::RationalFunction) = (degree(r.num), degree(r.den))
 
+"""
+    roots(r::RationalFunction) -> Tuple{Vector,Vector}
+
+Return the roots of the numerator and denominator polynomials of `r`.
+
+See also: `num`, `den`, `zeros`, `poles`, `solve`.
+"""
 roots(r::RationalFunction)  = (roots(r.num), roots(r.den))
 
+"""
+    variable(r::RationalFunction) -> Tuple{Poly,Poly,RationalFunctions.Conj}
+
+Return the variables of the numerator and denominator polynomials of `r` as well
+as the conjugation property.
+"""
 variable{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}) =
   (variable(U, T), variable(V, T), Conj{S})
-variable{T,S,U,V}(r::RationalFunction{Var{T},S,U,V})            =
-  (variable(U, T), variable(V, T), S)
+variable{T,S,U,V}(r::RationalFunction{Var{T},Conj{S},U,V})      =
+  (variable(U, T), variable(V, T), Conj{S})
 
+"""
+    num(r::RationalFunction) -> Poly
+
+Return the numerator polynomial of `r`.
+
+See also: `den`.
+"""
 num(r::RationalFunction)    = r.num
+
+"""
+    den(r::RationalFunction) -> Poly
+
+Return the denominator polynomial of `r`.
+
+See also: `num`.
+"""
 den(r::RationalFunction)    = r.den
+
+"""
+    zeros(r::RationalFunction) -> Vector
+
+Return the values which make `r` zero.
+
+See also: `roots`, `poles`, `solve`.
+"""
 zeros(r::RationalFunction)  = (rnew = reduce(r); roots(rnew.num))
+
+"""
+    poles(r::RationalFunction) -> Vector
+
+Return the values which make `r` unbounded, *i.e.*, tend to infinity.
+
+See also: `roots`, `zeros`, `solve`.
+"""
 poles(r::RationalFunction)  = (rnew = reduce(r); roots(rnew.den))
 
 ## Identities
@@ -89,6 +147,22 @@ _funceval(r::RationalFunction, X) = map(r, X)
 @compat (r::RationalFunction{T,Conj{true}}){T}(x::Real)     = _funceval(r, x)
 @compat (r::RationalFunction)(X)                            = _funceval(r, X)
 
+"""
+    funcfit(x, y, m::Int, n::Int = 0, var = :x) -> RationalFunction
+
+Fit a rational function of variable `var`, which
+  * has a numerator and a denominator of degrees `m` and `n`, respectively, and,
+  * which will output the values in `y` to the corresponding inputs in `x`.
+
+When `m` is also dropped, *i.e.*,
+
+    funcfit(x, y, var = :x) -> RationalFunction
+
+fit a rational function of variable `var`, which
+  * has a numerator and a denominator of degrees `m` and `n`, respectively, and,
+  * which will output the values in `y` to the corresponding inputs in `x`,
+where `n, r = divrem(length(x), 2)` and `m = n - 1 + r`.
+"""
 function funcfit(x, y, m::Int, n::Int, var::SymbolLike = :x)
   if length(x) ≠ length(y)
     warn("funcfit(x, y, m, n, var): length(x) ≠ length(y)")
@@ -134,6 +208,11 @@ function conj{T,S}(r::RationalFunction{Var{T},Conj{S}})
 end
 
 ## Derivative
+"""
+    derivative(r::RationalFunction, n::Int = 1) -> RationalFunction
+
+Take the `n`th order derivative of `r`.
+"""
 function derivative{T,S}(r::RationalFunction{T,S}, n::Int = 1)
   if n < 0
     warn("derivative(r, n): `n` must be non-negative")
@@ -152,6 +231,14 @@ function derivative{T,S}(r::RationalFunction{T,S}, n::Int = 1)
 end
 
 ## Reduction
+"""
+    reduce(r::RationalFunction) -> RationalFunction
+
+Do the pole-zero cancellation, *i.e.*, remove the common roots of the numerator
+and denominator polynomials of `r`.
+
+See also: `zeros`, `poles`, `roots`.
+"""
 function reduce{T,S}(r::RationalFunction{T,S})
   g       = gcd(r.num, r.den)
   common  = degree(g) == 0 ? one(g) : g
@@ -311,6 +398,14 @@ end
 .-(p::Poly, r::RationalFunction)  = +(-r, p)
 
 ## Solve
+"""
+    solve(lhs, rhs = 0) -> Vector
+
+Solve for the values which make `lhs = rhs`, where at least one of `lhs` and `rhs`
+is a `RationalFunction` while the other can be either a `Number` or a `Poly`.
+
+See also: `zeros`, `poles`, `roots`.
+"""
 function solve(lhs::RationalFunction, rhs::Number = 0)
   lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   rhs == zero(rhs)  && return zeros(lhs)

@@ -69,7 +69,9 @@ julia> r6 = RationalFunction([1,2,3], 't', RationalFunctions.Conj{true});
 julia> r7 = poly([1,2,3])/Poly([1,2,3]);
 ```
 
-See also: `RationalFunctions.Conj`.
+See also: `RationalFunctions.Var`, `RationalFunctions.Conj`, `RationalFunctions.SymbolLike`,
+`RationalFunctions.PolyLike`, `coeffs`, `degree`, `roots`, `variable`, `num`, `den`,
+`zeros`, `poles`, `funcfit`, `derivative`, `reduce`, `solve`.
 """
 immutable RationalFunction{T,S,U,V}
   num::Poly{U}
