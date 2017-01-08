@@ -6,22 +6,19 @@ import RationalFunctions: Var, Conj
 
 # Constructor tests
 ## Construction from polynomials
-px = Poly([1,-2,1])     # px = (x-1)(x-1)
+px_ = Poly([1,-2,1])     # px_ = (x-1)(x-1)
 qx = poly([1,2,3])      # qx = (x-1)(x-2)(x-3)
 ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 
-@test isequal(RationalFunction(px, qx), RationalFunction(px, qx, Conj{false}))
-@test isa(RationalFunction(px, qx, Conj{true}), RationalFunction{Var{px.var}, Conj{true}, eltype(px), eltype(qx)})
-@test isequal(RationalFunction(px), RationalFunction(px, one(px)))
-@test isequal(RationalFunction(px, Conj{true}), RationalFunction(px, one(px), Conj{true}))
-@test isequal(px/qx, RationalFunction(px, qx, Conj{false}))
+@test isequal(RationalFunction(px_, qx), RationalFunction(px_, qx, Conj{false}))
+@test isa(RationalFunction(px_, qx, Conj{true}), RationalFunction{Var{px_.var}, Conj{true}, eltype(px_), eltype(qx)})
+@test isequal(RationalFunction(px_), RationalFunction(px_, one(px_)))
+@test isequal(RationalFunction(px_, Conj{true}), RationalFunction(px_, one(px_), Conj{true}))
 
-@test_throws DomainError RationalFunction(px, ps)
-@test_throws DomainError RationalFunction(px, ps, Conj{true})
-@test_throws DomainError px./ps
-@test_throws DomainError px/ps
+@test_throws DomainError RationalFunction(px_, ps)
+@test_throws DomainError RationalFunction(px_, ps, Conj{true})
 
-@test isequal(RationalFunction(coeffs(px), qx), RationalFunction(px, coeffs(qx)))
+@test isequal(RationalFunction(coeffs(px_), qx), RationalFunction(px_, coeffs(qx)))
 @test isequal(RationalFunction(1, Poly([2])), RationalFunction(Poly([1]), 2))
 
 ## Construction from numbers and vectors
@@ -32,10 +29,10 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test isa(RationalFunction([1, 2.], 's', Conj{true}), RationalFunction{Var{:s}, Conj{true}, Float64, Float64})
 
 ## `Poly` construction from `RationalFunction`s
-r1 = px/qx
-r2 = px/Poly([4])
+r1 = RationalFunction(px_, qx)
+r2 = RationalFunction(px_, Poly([4]))
 
-@test isapprox(coeffs(Poly(r2)), coeffs(px/4))
+@test isapprox(coeffs(Poly(r2)), coeffs(px_/4))
 @test_throws DomainError Poly(r1)
 
 # Conversion tests
@@ -46,14 +43,14 @@ p3 = poly(v3)
 @test eltype([RationalFunction(v1, v2), RationalFunction(v2, v1)])  ==
   RationalFunction{Var{:x}, Conj{false}, promote_type(eltype(v1), eltype(v2)),
     promote_type(eltype(v1), eltype(v2))}
-@test eltype([RationalFunction(px, qx), 1.])                        ==
-  RationalFunction{Var{px.var}, Conj{false}, promote_type(eltype(px), Float64),
+@test eltype([RationalFunction(px_, qx), 1.])                        ==
+  RationalFunction{Var{px_.var}, Conj{false}, promote_type(eltype(px_), Float64),
     eltype(qx)}
-@test eltype([RationalFunction(px, qx, Conj{true}), p3])            ==
-  RationalFunction{Var{px.var}, Conj{true}, promote_type(eltype(px), eltype(p3)),
+@test eltype([RationalFunction(px_, qx, Conj{true}), p3])            ==
+  RationalFunction{Var{px_.var}, Conj{true}, promote_type(eltype(px_), eltype(p3)),
     eltype(qx)}
 
-@test_throws DomainError [px/qx, ps]
+@test_throws DomainError [RationalFunction(px_, qx), ps]
 
 # Printing tests
 # TODO: Think of some useful printing tests
@@ -150,7 +147,7 @@ p3 = poly([1])    # p3 = (x-1)
 p4 = poly([2,3])  # p4 = (x-2)(x-3)
 
 r1      = RationalFunction(p1, p2)
-result  = (polyder(p3)*p4 - p3*polyder(p4))/p4^2
+result  = RationalFunction(polyder(p3)*p4 - p3*polyder(p4), p4^2)
 @test derivative(r1) == result
 @test !isequal(derivative(r1), result)
 

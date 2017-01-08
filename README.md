@@ -92,12 +92,6 @@ julia> # Construct a rational function from coefficients (dropping the variable)
 julia> r5 = RationalFunction([1,2,3],[2,4,6])
 f(s) = num(s)/den(s), where(s) is Poly(1 + 2⋅s + 3⋅s^2), and,
 den(s) is Poly(2 + 4⋅s + 6⋅s^2).
-
-julia> # Construct a directly from polynomial division
-julia> r6 = numpoly/denpoly
-f(s) = num(s)/den(s), where,
-num(s) is Poly(-2 + 5⋅s - 4⋅s^2 + s^3), and,
-den(s) is Poly(-6 + 11⋅s - 6⋅s^2 + s^3).
 ```
 
 ### Convenience functions
@@ -155,7 +149,7 @@ Poly(1.6809852898721749 + 2.613098491401878⋅x)
 julia> p2 = Poly(1+2*rand(3))
 Poly(1.6629832340509254 + 2.9921125048432287⋅x + 2.8500993637891843⋅x^2)
 
-julia> r7 = p1/p2
+julia> r7 = RationalFunction(p1, p2)
 f(x) = num(x)/den(x), where,
 num(x) is Poly(1.6809852898721749 + 2.613098491401878⋅x), and,
 den(x) is Poly(1.6629832340509254 + 2.9921125048432287⋅x + 2.8500993637891843⋅x^2).
@@ -240,10 +234,12 @@ julia> denpoly
 Poly(-6 + 11⋅s - 6⋅s^2 + s^3)
 
 julia> r1+r2
-ERROR: r1+r2: r1 and r2 have different variables ((s,RationalFunctions.Conj{false}) vs (s,RationalFunctions.Conj{true}))
+WARNING: r1+r2: `r1` (s,Conj{false}) and `r2` (s,Conj{true}) have different variables
+ERROR: DomainError: ...
 
 julia> r1+r5
-ERROR: r1+r2: r1 and r2 have different variables ((s,RationalFunctions.Conj{false}) vs (x,RationalFunctions.Conj{false}))
+WARNING: r1+r2: `r1` (s,Conj{false}) and `r2` (x,Conj{false}) have different variables
+ERROR: DomainError: ...
 
 julia> r1+r3
 f(s) = num(s)/den(s), where,
@@ -254,8 +250,6 @@ julia> r2+r4
 f(s̄) = num(s̄)/den(s̄), where,
 num(s) is Poly(-10.0 + 1.0⋅s - 2.0⋅s^2 + 38.0⋅s^3 - 36.0⋅s^4 + 9.0⋅s^5), and,
 den(s) is Poly(-12.0 - 2.0⋅s - 4.0⋅s^2 + 44.0⋅s^3 - 32.0⋅s^4 + 6.0⋅s^5).
-julia> r1 == r6
-true
 
 julia> r1 * denpoly == numpoly
 true

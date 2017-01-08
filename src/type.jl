@@ -51,13 +51,6 @@ where,
   * `num` and `den` objects can be either a `Number` or a `Vector`, and,
   * `var` is either a `Symbol`, a `Char` or an `AbstractString`.
 
-Construct `RationalFunction` objects by `Poly` division:
-
-    Base./(num, den)
-
-where,
-  * `num` and `den` are `Poly` objects.
-
 # Examples
 ```julia
 julia> r1 = RationalFunction(poly([1,2,3]));
@@ -66,7 +59,6 @@ julia> r3 = RationalFunction(poly([1,2,3]), RationalFunctions.Conj{true});
 julia> r4 = RationalFunction([1,2,3]);
 julia> r5 = RationalFunction(1, [1, 2, 3], "s");
 julia> r6 = RationalFunction([1,2,3], 't', RationalFunctions.Conj{true});
-julia> r7 = poly([1,2,3])/Poly([1,2,3]);
 ```
 
 See also: `RationalFunctions.Var`, `RationalFunctions.Conj`, `RationalFunctions.SymbolLike`,
@@ -142,10 +134,6 @@ RationalFunction{S,U<:Number}(num::Vector{U}, var::SymbolLike = :x,
 RationalFunction{S,U<:Number}(num::U, var::SymbolLike = :x,
   conj::Type{Conj{S}} = Conj{false}) = RationalFunction(Poly([num], var),
   Poly([one(U)], var), conj)
-
-# Construction from Poly division
-/(p1::Poly, p2::Poly)   = RationalFunction(p1, p2, Conj{false})
-./(p1::Poly, p2::Poly)  = /(p1,p2)
 
 """
     Poly(r::RationalFunction)
