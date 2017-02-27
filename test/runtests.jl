@@ -1,8 +1,9 @@
+using Plots
+gr(display = false)
+
 using Polynomials
 using RationalFunctions
 using Base.Test
-
-import RationalFunctions: Var, Conj
 
 # Constructor tests
 ## Construction from polynomials
@@ -10,13 +11,13 @@ px_ = Poly([1,-2,1])     # px_ = (x-1)(x-1)
 qx = poly([1,2,3])      # qx = (x-1)(x-2)(x-3)
 ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 
-@test isequal(RationalFunction(px_, qx), RationalFunction(px_, qx, Conj{false}))
-@test isa(RationalFunction(px_, qx, Conj{true}), RationalFunction{Var{px_.var}, Conj{true}, eltype(px_), eltype(qx)})
+@test isequal(RationalFunction(px_, qx), RationalFunction(px_, qx, Val{:notc}))
+@test isa(RationalFunction(px_, qx, Val{:conj}), RationalFunction{Val{px_.var}, Val{:conj}, eltype(px_), eltype(qx)})
 @test isequal(RationalFunction(px_), RationalFunction(px_, one(px_)))
-@test isequal(RationalFunction(px_, Conj{true}), RationalFunction(px_, one(px_), Conj{true}))
+@test isequal(RationalFunction(px_, Val{:conj}), RationalFunction(px_, one(px_), Val{:conj}))
 
 @test_throws DomainError RationalFunction(px_, ps)
-@test_throws DomainError RationalFunction(px_, ps, Conj{true})
+@test_throws DomainError RationalFunction(px_, ps, Val{:conj})
 
 @test isequal(RationalFunction(coeffs(px_), qx), RationalFunction(px_, coeffs(qx)))
 @test isequal(RationalFunction(1, Poly([2])), RationalFunction(Poly([1]), 2))
@@ -25,8 +26,8 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test isequal(RationalFunction(1, [1, 2]), RationalFunction([1], [1, 2]))
 @test isequal(RationalFunction([1, 2], 1.), RationalFunction([1, 2], [1.]))
 @test isequal(RationalFunction(1, 1), RationalFunction([1], [1]))
-@test isa(RationalFunction(1), RationalFunction{Var{:x}, Conj{false}, Int, Int})
-@test isa(RationalFunction([1, 2.], 's', Conj{true}), RationalFunction{Var{:s}, Conj{true}, Float64, Float64})
+@test isa(RationalFunction(1), RationalFunction{Val{:x}, Val{:notc}, Int, Int})
+@test isa(RationalFunction([1, 2.], 's', Val{:conj}), RationalFunction{Val{:s}, Val{:conj}, Float64, Float64})
 
 ## `Poly` construction from `RationalFunction`s
 r1 = RationalFunction(px_, qx)
@@ -41,13 +42,13 @@ v2 = [1., 2., 3.]
 v3 = [1 + 1im, 2. - 1im]
 p3 = poly(v3)
 @test eltype([RationalFunction(v1, v2), RationalFunction(v2, v1)])  ==
-  RationalFunction{Var{:x}, Conj{false}, promote_type(eltype(v1), eltype(v2)),
+  RationalFunction{Val{:x}, Val{:notc}, promote_type(eltype(v1), eltype(v2)),
     promote_type(eltype(v1), eltype(v2))}
 @test eltype([RationalFunction(px_, qx), 1.])                        ==
-  RationalFunction{Var{px_.var}, Conj{false}, promote_type(eltype(px_), Float64),
+  RationalFunction{Val{px_.var}, Val{:notc}, promote_type(eltype(px_), Float64),
     eltype(qx)}
-@test eltype([RationalFunction(px_, qx, Conj{true}), p3])            ==
-  RationalFunction{Var{px_.var}, Conj{true}, promote_type(eltype(px_), eltype(p3)),
+@test eltype([RationalFunction(px_, qx, Val{:conj}), p3])            ==
+  RationalFunction{Val{px_.var}, Val{:conj}, promote_type(eltype(px_), eltype(p3)),
     eltype(qx)}
 
 @test_throws DomainError [RationalFunction(px_, qx), ps]
@@ -60,11 +61,11 @@ p3 = poly(v3)
 r1 = RationalFunction([ 0., 1, 2], :x)
 r2 = copy(r1)
 
-@test isequal(r1, r2) && !is(r1, r2)
+@test isequal(r1, r2) && !(===(r1, r2))
 
-## Variable-related
+## Valiable-related
 @test eltype(r1) == eltype(typeof(r1)) == (eltype(r1.num), eltype(r1.den))
-@test variable(r1) == variable(typeof(r1)) == (variable(r1.num), variable(r1.den), Conj{false})
+@test variable(r1) == variable(typeof(r1)) == (variable(r1.num), variable(r1.den), Val{:notc})
 
 ## Identities
 @test one(r1) == one(typeof(r1)) == RationalFunction(one(r1.num), one(r1.den))
@@ -241,9 +242,6 @@ sln = solve(r1, r2)
 @test_throws ErrorException solve(r1, r1)
 
 # Plotting via `RecipesBase` and `Plots`
-using Plots
-gr(display = false)
-
 x       = -2:1E-1:2
 xinit   = x[5:5:end]
 yinit1  = map(x->x^2+3x+5, xinit)

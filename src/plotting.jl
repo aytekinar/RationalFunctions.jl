@@ -1,4 +1,4 @@
-@recipe function f{T,S,U<:Real,V<:Real,W<:Real,Z<:Real}(r::RationalFunction{Var{T},Conj{S},U,V},
+@recipe function f{T,S,U<:Real,V<:Real,W<:Real,Z<:Real}(r::RationalFunction{Val{T},Val{S},U,V},
   x::AbstractVector, xinit::AbstractVector{W}, yinit::AbstractVector{Z})
   if length(xinit) ≠ length(yinit)
     warn("plot(r, x, xinit, yinit): length(xinit) ≠ length(yinit)")
@@ -25,10 +25,10 @@
   end
 end
 
-@recipe f{T,S,U<:Real,V<:Real}(r::RationalFunction{Var{T},Conj{S},U,V},
+@recipe f{T,S,U<:Real,V<:Real}(r::RationalFunction{Val{T},Val{S},U,V},
   x::AbstractVector) = (r, x, Int[], Int[])
 
-@recipe function f{T,S,U<:Real,V<:Real,Z<:Tuple}(r::RationalFunction{Var{T},Conj{S},U,V},
+@recipe function f{T,S,U<:Real,V<:Real,Z<:Tuple}(r::RationalFunction{Val{T},Val{S},U,V},
   x::AbstractVector, init::AbstractArray{Z})
   xinit = map(x->x[1], init)
   yinit = map(x->x[2], init)

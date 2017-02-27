@@ -34,15 +34,15 @@ See also: `num`, `den`, `zeros`, `poles`, `solve`.
 roots(r::RationalFunction)  = (roots(r.num), roots(r.den))
 
 """
-    variable(r::RationalFunction) -> Tuple{Poly,Poly,RationalFunctions.Conj}
+    variable(r::RationalFunction) -> Tuple{Poly,Poly,Val}
 
 Return the variables of the numerator and denominator polynomials of `r` as well
 as the conjugation property.
 """
-variable{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}) =
-  (variable(U, T), variable(V, T), Conj{S})
-variable{T,S,U,V}(r::RationalFunction{Var{T},Conj{S},U,V})      =
-  (variable(U, T), variable(V, T), Conj{S})
+variable{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}}) =
+  (variable(U, T), variable(V, T), Val{S})
+variable{T,S,U,V}(r::RationalFunction{Val{T},Val{S},U,V})      =
+  (variable(U, T), variable(V, T), Val{S})
 
 """
     num(r::RationalFunction) -> Poly
@@ -81,17 +81,17 @@ See also: `roots`, `zeros`, `solve`.
 poles(r::RationalFunction)  = (rnew = reduce(r); roots(rnew.den))
 
 ## Identities
-one{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}})  =
-  RationalFunction(Poly([one(U)], T), Poly([one(V)], T), Conj{S})
+one{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}})  =
+  RationalFunction(Poly([one(U)], T), Poly([one(V)], T), Val{S})
 one{T,S}(r::RationalFunction{T,S})                          =
   RationalFunction(one(r.num), one(r.den), S)
-zero{T,S,U,V}(::Type{RationalFunction{Var{T},Conj{S},U,V}}) =
-  RationalFunction(Poly(U[], T), Poly([one(V)], T), Conj{S})
+zero{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}}) =
+  RationalFunction(Poly(U[], T), Poly([one(V)], T), Val{S})
 zero{T,S}(r::RationalFunction{T,S})                         =
   RationalFunction(zero(r.num), one(r.den), S)
 
 ## Comparison
-hash{T,S}(r::RationalFunction{Var{T},Conj{S}}, h::UInt)             =
+hash{T,S}(r::RationalFunction{Val{T},Val{S}}, h::UInt)             =
   hash(T, hash(S, hash(coeffs(r.num), hash(coeffs(r.den), h))))
 
 =={T,S}(r1::RationalFunction{T,S}, r2::RationalFunction{T,S})       =
@@ -106,8 +106,8 @@ eps{T<:AbstractFloat}(::Type{T})          = Base.eps(T)
 eps{T<:AbstractFloat}(::Type{Complex{T}}) = Base.eps(T)
 eps{T}(::Type{T})                         = zero(T)
 
-function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Var{T},Conj{S},U1,V1},
-  r2::RationalFunction{Var{T},Conj{S},U2,V2};
+function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Val{T},Val{S},U1,V1},
+  r2::RationalFunction{Val{T},Val{S},U2,V2};
   rtol::Real = sqrt(eps(promote_type(U1,V2,U2,V2))), atol::Real = 0)
   p1 = r1.num * r2.den
   p2 = r1.den * r2.num
@@ -115,9 +115,9 @@ function isapprox{T,S,U1,V1,U2,V2}(r1::RationalFunction{Var{T},Conj{S},U1,V1},
   isapprox(coeffs(p1), coeffs(p2); rtol = rtol, atol = atol)
 end
 
-function isapprox{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}},
-  r2::RationalFunction{Var{T2},Conj{S2}}; rtol::Real = 0, atol::Real = 0)
-  warn("r1≈r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+function isapprox{T1,S1,T2,S2}(r1::RationalFunction{Val{T1},Val{S1}},
+  r2::RationalFunction{Val{T2},Val{S2}}; rtol::Real = 0, atol::Real = 0)
+  warn("r1≈r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
 
@@ -143,8 +143,8 @@ end
 _funceval(r::RationalFunction, X) = map(r, X)
 
 @compat (r::RationalFunction)(x::Number)                    = _funceval(r, x)
-@compat (r::RationalFunction{T,Conj{true}}){T}(x::Number)   = _funceval(r, conj(x))
-@compat (r::RationalFunction{T,Conj{true}}){T}(x::Real)     = _funceval(r, x)
+@compat (r::RationalFunction{T,Val{:conj}}){T}(x::Number)   = _funceval(r, conj(x))
+@compat (r::RationalFunction{T,Val{:conj}}){T}(x::Real)     = _funceval(r, x)
 @compat (r::RationalFunction)(X)                            = _funceval(r, X)
 
 """
@@ -201,10 +201,10 @@ inv{T,S}(r::RationalFunction{T,S})  = RationalFunction(copy(r.den), copy(r.num),
 transpose(r::RationalFunction)      = copy(r)
 
 ## Conjugation
-function conj{T,S}(r::RationalFunction{Var{T},Conj{S}})
+function conj{T,S}(r::RationalFunction{Val{T},Val{S}})
   numcoeff, dencoeff = coeffs(r)
   RationalFunction(Poly(conj(copy(numcoeff)), T), Poly(conj(copy(dencoeff)), T),
-    Conj{!S})
+    Val{ifelse(S == :conj, :notc, :conj)})
 end
 
 ## Derivative
@@ -249,7 +249,7 @@ function reduce{T,S}(r::RationalFunction{T,S})
 end
 
 ## Basic operations between rational functions
-function +{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T},Conj{S}})
+function +{T,S}(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{S}})
   g       = gcd(r1.den, r2.den)
   common  = Polynomials.degree(g) == 0 ? one(g) : g
 
@@ -257,35 +257,35 @@ function +{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T
   den2, _ = divrem(r2.den, common)
   num     = r1.num * den2 + den1 * r2.num
   den     = den1*den2*common
-  RationalFunction(num, den, Conj{S})
+  RationalFunction(num, den, Val{S})
 end
 
-function +{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
-  warn("r1+r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+function +{T1,S1,T2,S2}(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}})
+  warn("r1+r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
 
-function *{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T},Conj{S}})
+function *{T,S}(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{S}})
   num = r1.num * r2.num
   den = r1.den * r2.den
-  RationalFunction(num, den, Conj{S})
+  RationalFunction(num, den, Val{S})
 end
 
-function *{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
-  warn("r1*r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+function *{T1,S1,T2,S2}(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}})
+  warn("r1*r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
 
 dot(r1::RationalFunction, r2::RationalFunction) = *(r1, r2)
 
-function /{T,S}(r1::RationalFunction{Var{T},Conj{S}}, r2::RationalFunction{Var{T},Conj{S}})
+function /{T,S}(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{S}})
   num = r1.num * r2.den
   den = r1.den * r2.num
-  RationalFunction(num, den, Conj{S})
+  RationalFunction(num, den, Val{S})
 end
 
-function /{T1,S1,T2,S2}(r1::RationalFunction{Var{T1},Conj{S1}}, r2::RationalFunction{Var{T2},Conj{S2}})
-  warn("r1/r2: `r1` ($T1,Conj{$S1}) and `r2` ($T2,Conj{$S2}) have different variables")
+function /{T1,S1,T2,S2}(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}})
+  warn("r1/r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
 
@@ -330,13 +330,13 @@ dot(n::Number, r::RationalFunction)         = *(r, n)
 .-(n::Number, r::RationalFunction)  = +(-r, n)
 
 ## Basic operations between `Poly`s
-function =={T,S}(r::RationalFunction{Var{T},S}, p::Poly)
+function =={T,S}(r::RationalFunction{Val{T},S}, p::Poly)
   T ≠ p.var && return false
   return r.num == p*r.den
 end
 ==(p::Poly, r::RationalFunction) = ==(r, p)
 
-function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Var{T},S,U,V}, p::Poly{Z};
+function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Val{T},S,U,V}, p::Poly{Z};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0)
   if T ≠ p.var
     warn("r≈p: `r` ($T) and `p` ($(p.var)) have different variables")
@@ -344,11 +344,11 @@ function isapprox{T,S,U,V,Z<:Number}(r::RationalFunction{Var{T},S,U,V}, p::Poly{
   end
   isapprox(coeffs(r.num), coeffs(p*r.den); rtol = rtol, atol = atol)
 end
-isapprox{T,S,U,V,Z<:Number}(p::Poly{Z}, r::RationalFunction{Var{T},S,U,V};
+isapprox{T,S,U,V,Z<:Number}(p::Poly{Z}, r::RationalFunction{Val{T},S,U,V};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) =
   isapprox(r, p; rtol = rtol, atol = atol)
 
-function +{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
+function +{T,S}(r::RationalFunction{Val{T},S}, p::Poly)
   if T ≠ p.var
     warn("r+p: `r` ($T) and `p` ($(p.var)) have different variables")
     throw(DomainError())
@@ -357,7 +357,7 @@ function +{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
 end
 +(p::Poly, r::RationalFunction) = +(r, p)
 
-function *{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
+function *{T,S}(r::RationalFunction{Val{T},S}, p::Poly)
   if T ≠ p.var
     warn("r*p: `r` ($T) and `p` ($(p.var)) have different variables")
     throw(DomainError())
@@ -368,7 +368,7 @@ end
 dot(r::RationalFunction, p::Poly)         = *(r, p)
 dot(p::Poly, r::RationalFunction)         = *(r, p)
 
-function /{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
+function /{T,S}(r::RationalFunction{Val{T},S}, p::Poly)
   if T ≠ p.var
     warn("r/p: `r` ($T) and `p` ($(p.var)) have different variables")
     throw(DomainError())
@@ -376,7 +376,7 @@ function /{T,S}(r::RationalFunction{Var{T},S}, p::Poly)
   RationalFunction(r.num, p*r.den, S)
 end
 
-function /{T,S}(p::Poly, r::RationalFunction{Var{T},S})
+function /{T,S}(p::Poly, r::RationalFunction{Val{T},S})
   if T ≠ p.var
     warn("p/r: `p` ($(p.var)) and `r` ($T) have different variables")
     throw(DomainError())
@@ -421,14 +421,14 @@ end
 
 solve(lhs::PolyLike, rhs::RationalFunction) = solve(rhs, lhs)
 
-function solve{T,S}(lhs::RationalFunction{Var{T},Conj{S}},
-  rhs::RationalFunction{Var{T},Conj{S}})
+function solve{T,S}(lhs::RationalFunction{Val{T},Val{S}},
+  rhs::RationalFunction{Val{T},Val{S}})
   lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   zeros(lhs - rhs)
 end
 
-function solve{T1,S1,T2,S2}(lhs::RationalFunction{Var{T1},Conj{S1}},
-  rhs::RationalFunction{Var{T2},Conj{S2}})
-  warn("solve(lhs,rhs): `lhs` ($T1,Conj{$S1}) and `rhs` ($T2,Conj{$S2}) have different variables")
+function solve{T1,S1,T2,S2}(lhs::RationalFunction{Val{T1},Val{S1}},
+  rhs::RationalFunction{Val{T2},Val{S2}})
+  warn("solve(lhs,rhs): `lhs` ($T1,Val{$S1}) and `rhs` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
