@@ -141,6 +141,19 @@ r2 = conj(r1)
 @test num(r1) == conj(num(r2))
 @test den(r1) == conj(den(r2))
 
+# test related to #2
+m1 = fill(r1,1,1) # [r1]
+m2 = fill(r2,1,1) # [conj(r1)]
+m3 = conj(m1)     # [conj(r1)]
+
+@test m2 == m3
+
+r3 = convert(typeof(r1), r1)
+r4 = convert(typeof(r2), r1)
+
+@test r1 == r3
+@test r2 == r4
+
 ## Derivative and reduction
 ### p1 = (x-1)(x-1)
 ### p2 = (x-1)(x-2)(x-3)

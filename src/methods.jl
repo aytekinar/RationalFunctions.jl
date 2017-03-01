@@ -206,6 +206,8 @@ function conj{T,S}(r::RationalFunction{Val{T},Val{S}})
   RationalFunction(Poly(conj(copy(numcoeff)), T), Poly(conj(copy(dencoeff)), T),
     Val{ifelse(S == :conj, :notc, :conj)})
 end
+# Related to #2. This is the solution in Julia v0.6 in `arraymath.jl`
+conj{T,S,U,V}(m::AbstractArray{RationalFunction{Val{T},Val{S},U,V}}) = map(conj, m)
 
 ## Derivative
 """

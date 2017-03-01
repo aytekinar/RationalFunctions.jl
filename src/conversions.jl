@@ -7,6 +7,11 @@ convert{T,S,U1,V1,U2,V2}(::Type{RationalFunction{Val{T},Val{S},U1,V1}},
   RationalFunction(convert(Poly{U1}, r.num), convert(Poly{V1}, r.den), Val{S})
 convert{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}},
   r::RationalFunction{Val{T},Val{S},U,V}) = r
+# Conversion between :conj and :nonc RF's (related to #2)
+convert{T,S1,S2,U1,V1,U2,V2}(::Type{RationalFunction{Val{T},Val{S1},U1,V1}},
+  r::RationalFunction{Val{T},Val{S2},U2,V2}) =
+  RationalFunction(convert(Poly{U1}, conj(r.num)), convert(Poly{V1}, conj(r.den)),
+  Val{S1})
 
 # Relation with numbers
 promote_rule{T,S,U,V,Y<:Number}(::Type{RationalFunction{Val{T},Val{S},U,V}}, ::Type{Y}) =
