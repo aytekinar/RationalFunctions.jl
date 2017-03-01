@@ -10,13 +10,13 @@ convert{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}},
 
 # Relation with numbers
 promote_rule{T,S,U,V,Y<:Number}(::Type{RationalFunction{Val{T},Val{S},U,V}}, ::Type{Y}) =
-  RationalFunction{Val{T},Val{S},promote_type(U,Y),V}
+  RationalFunction{Val{T},Val{S},promote_type(U,Y),promote_type(V,Y)}
 convert{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}}, n::Number) =
   RationalFunction(Poly(U[n], T), Poly([one(V)], T), Val{S})
 
 # Relation with polynomials
 promote_rule{T,S,U,V,Y<:Number}(::Type{RationalFunction{Val{T},Val{S},U,V}},
-  ::Type{Poly{Y}}) = RationalFunction{Val{T},Val{S},promote_type(U,Y),V}
+  ::Type{Poly{Y}}) = RationalFunction{Val{T},Val{S},promote_type(U,Y),promote_type(V,Y)}
 function convert{T,S,U,V}(::Type{RationalFunction{Val{T},Val{S},U,V}}, p::Poly)
   newpoly = convert(Poly{U}, p)
   RationalFunction(newpoly, Poly([one(V)], T), Val{S})
