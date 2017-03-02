@@ -45,11 +45,11 @@ p3 = poly(v3)
   RationalFunction{Val{:x}, Val{:notc}, promote_type(eltype(v1), eltype(v2)),
     promote_type(eltype(v1), eltype(v2))}
 @test eltype([RationalFunction(px_, qx), 1.])                        ==
-  RationalFunction{Val{px_.var}, Val{:notc}, promote_type(eltype(px_), Float64),
-    eltype(qx)}
+  RationalFunction{Val{px_.var}, Val{:notc}, promote_type(eltype(px_), typeof(1.)),
+    promote_type(eltype(qx), typeof(1.))}
 @test eltype([RationalFunction(px_, qx, Val{:conj}), p3])            ==
   RationalFunction{Val{px_.var}, Val{:conj}, promote_type(eltype(px_), eltype(p3)),
-    eltype(qx)}
+    promote_type(eltype(qx), eltype(p3))}
 
 @test_throws DomainError [RationalFunction(px_, qx), ps]
 
