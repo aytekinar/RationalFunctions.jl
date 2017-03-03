@@ -18,7 +18,7 @@ notifications:
   email: false
 
 script:
-  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.clone(pwd()); Pkg.build("RationalFunctions")'
   - julia --check-bounds=yes --inline=no -e 'Pkg.test("RationalFunctions",
     coverage=true)'
 
