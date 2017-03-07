@@ -22,7 +22,7 @@ functions in [Julia][julia-link].
 
 `RationalFunctions` aims at supporting rational functions of single variable. The
 package extends `Polynomials`, and tries to provide a set of basic mathematical
-functonality between `Number`s, `Poly`s and `RationalFunction` objects.
+functionality between `Number`s, `Poly`s and `RationalFunction` objects.
 
 ## Basic Usage
 
