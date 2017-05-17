@@ -31,6 +31,7 @@ notifications:
     on_build_status_changed: false
 
 install:
+  - ps: "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12"
   - ps: (new-object net.webclient).DownloadFile(
         $("http://s3.amazonaws.com/"+$env:link),
         "C:\projects\julia-binary.exe")
