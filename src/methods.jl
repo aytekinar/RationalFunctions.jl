@@ -518,7 +518,7 @@ function residue(num::Poly, den::Poly)
     return r, p, k
 end
 residue{T<:Number}(num::Vector{T}, den::Vector{T}) = residue(Poly(num), Poly(den))
-residue(rfunc::RationalFunction) = residue(rfunc.num, rfunc.den)
+residue(rfunc::RationalFunction) = residue(num(rfunc), den(rfunc))
 
 ### Conversely, given r, p, and k terms, return polynomial fraction
 """
@@ -553,7 +553,7 @@ julia> residue(r, p, k)
 ([1.0, 0.0, 1.0], [0.0, 1.0, -2.0, 1.0])
 ```
 """
-function residue(r::Vector{<:Number}, p::Vector{<:Number}, k::Vector{<:Number})
+function residue{T<:Number,S<:Number,U<:Number}(r::Vector{T}, p::Vector{S}, k::Vector{U})
     den_poly = poly(p)
     unique_p = unique(p)
     dup_p_dict = Dict()
