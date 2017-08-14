@@ -94,7 +94,7 @@ Some functions exist for your convenience when working with `RationalFunction`s.
 
 Please read the corresponding documentation in Julia by issuing `?coeffs`, `?degree`,
 `?roots`, `?variable`, `?num`, `?den`, `?zeros`, `?poles`, `?funcfit`, `?derivative`,
-`?reduce` or `?solve`.
+`?reduce`, `?residue`, or `?solve`.
 
 #### Example
 

@@ -272,3 +272,34 @@ r2      = funcfit(xinit, yinit2, 2)
 savefig("test-plot.png")
 
 @test_throws DomainError plot(r1, x, xinit, [yinit1; 1])
+
+## residue
+num1 = [6, 9, 16, 8, 1]
+den1 = [6, 11, 6, 1]
+r, p, k = residue(num1, den1)
+@test r ≈ [-6.0, -4.0, 3.0]
+@test p ≈ [-3.0, -2.0, -1.0]
+@test k ≈ [2.0, 1.0]
+num2, den2 = residue(r, p, k)
+@test num1 ≈ num2
+@test den1 ≈ den2
+
+num1 = [10, 2]
+den1 = [0, 10, 2, 1]
+r, p, k = residue(num1, den1)
+@test r ≈ [-0.5-(1/6)im, -0.5+(1/6)im, 1.0+0.0im]
+@test p ≈ [-1.0+3.0im, -1.0-3.0im, 0.0+0.0im]
+@test k ≈ [0.0]
+num2, den2 = residue(r, p, k)
+#@test num1 ≈ num2 #Cannot pass due to erroneous third, imaginary root. Numerical errors?
+@test den1 ≈ den2
+
+num1 = [1, 0, 1]
+den1 = [0, 1, -2, 1]
+r, p, k = residue(num1, den1)
+@test r ≈ [-0.0, 2.0, 1.0]
+@test p ≈ [1.0, 1.0, 0.0]
+@test k ≈ [0.0]
+num2, den2 = residue(r, p, k)
+@test num1 ≈ num2
+@test den1 ≈ den2

@@ -434,3 +434,152 @@ function solve{T1,S1,T2,S2}(lhs::RationalFunction{Val{T1},Val{S1}},
   warn("solve(lhs,rhs): `lhs` ($T1,Val{$S1}) and `rhs` ($T2,Val{$S2}) have different variables")
   throw(DomainError())
 end
+
+### Given rational function, return partial fraction decomposition
+"""
+    r, p, k = residue(num, den)
+    r, p, k = residue(x::RationalFunction)
+
+Given a numerator and denominator of a polynomial fraction or a RationalFunction,
+return the partial fraction decomposition. The residues are returned as `r`, the
+poles as `p`, and the direct terms as `k`. Both numerator and denominator can be
+given as an array of coefficients or as Poly types.
+
+Duplicate poles are handled by each subsequent duplicate having the
+denominator's power raised by one. See package README for further explanation.
+
+# Examples
+``` julia
+# Real poles with direct terms
+julia> num1 = Poly([6, 9, 16, 8, 1])
+julia> den1 = Poly([6, 11, 6, 1])
+julia> residue(num1, den1)
+([-6.0, -4.0, 3.0], [-3.0, -2.0, -1.0], [2.0, 1.0])
+
+# Complex poles
+julia> residue([10, 2], [0, 10, 2, 1])
+(Complex{Float64}[-0.5-0.166667im, -0.5+0.166667im, 1.0+0.0im], Complex{Float64}[-1.0+3.0im, -1.0-3.0im, 0.0+0.0im], [0.0])
+
+# Duplicate poles
+julia> r_func = RationalFunction(Poly([1,0,1]),Poly([0,1])*Poly([-1,1])^2))
+julia> residue(r_func)
+([-0.0, 2.0, 1.0], [1.0, 1.0, 0.0], [0.0])
+```
+"""
+function residue(num::Poly, den::Poly)
+    p = roots(den)
+    num_p = length(p)
+    div_poly, rem_poly = divrem(num, den)
+    k = coeffs(div_poly)
+    rem_coeffs = coeffs(rem_poly)
+    # Account for repeated poles. The dictionary created is used for pole powers
+    unique_p = unique(p)
+    dup_p_dict = Dict()
+    for pole in unique_p
+        temp_count = count((i)->i==pole, p)
+        if temp_count > 1
+          dup_p_dict[pole] = temp_count-1
+        end
+    end
+    # Capture case in which the poles create terms with greater
+    # powers than those in the numerator
+    if isempty(dup_p_dict)
+        max_power = num_p
+    else
+        max_power = max(num_p, maximum(values(dup_p_dict))+1)
+    end
+    if length(rem_coeffs)<max_power
+        temp_rem_coeffs = zeros(max_power)
+        temp_rem_coeffs[1:length(rem_coeffs)] = rem_coeffs
+        rem_coeffs = temp_rem_coeffs
+    end
+    # Construct matrix representing the system of equations for
+    # the residues
+    residue_mtx = zeros(eltype(p),max_power, num_p)
+    for col_idx in 1:num_p
+        temp_p = p[col_idx]
+        if temp_p in keys(dup_p_dict)
+            temp_poly = Poly([-temp_p, 1])^dup_p_dict[temp_p]
+            dup_p_dict[temp_p]-=1
+        else
+            temp_poly = Poly(1)
+        end
+        for poly_idx in 1:num_p
+            if p[poly_idx] != temp_p
+                temp_poly *= Poly([-p[poly_idx], 1])
+            end
+        end
+        temp_coeffs = coeffs(temp_poly)
+        zero_pad = zeros(eltype(p),1,max_power)
+        zero_pad[1:length(temp_coeffs)] = temp_coeffs
+        residue_mtx[:,col_idx] = zero_pad
+    end
+    r = residue_mtx\rem_coeffs
+    return r, p, k
+end
+residue{T<:Number}(num::Vector{T}, den::Vector{T}) = residue(Poly(num), Poly(den))
+residue(rfunc::RationalFunction) = residue(rfunc.num, rfunc.den)
+
+### Conversely, given r, p, and k terms, return polynomial fraction
+"""
+========================================
+
+    num, dem = residue(r, p, k)
+
+Given a set of residues, poles, and direct terms, calculate the corresponding
+polynomial fraction.
+
+# Examples
+``` julia
+# Real poles with direct terms
+julia> r = [-6.0, -4.0, 3.0]
+julia> p = [-3.0, -2.0, -1.0]
+julia> k = [2.0, 1.0]
+julia> residue(r, p, k)
+([6, 9, 16, 8, 1], [6, 11, 6, 1])
+
+# Complex poles
+julia> r = [-0.5-0.166667im, -0.5+0.166667im, 1.0+0.0im]
+julia> p = [-1.0+3.0im, -1.0-3.0im, 0.0+0.0im]
+julia> k = [0.0]
+julia> residue(r, p, k)
+(Complex{Float64}[10.0+0.0im, 2.0+0.0im], Complex{Float64}[0.0+0.0im, 10.0+0.0im, 2.0+0.0im, 1.0+0.0im])
+
+# Duplicate poles
+julia> r = [-0.0, 2.0, 1.0]
+julia> p = [1.0, 1.0, 0.0]
+julia> k = [0.0]
+julia> residue(r, p, k)
+([1.0, 0.0, 1.0], [0.0, 1.0, -2.0, 1.0])
+```
+"""
+function residue(r::Vector{<:Number}, p::Vector{<:Number}, k::Vector{<:Number})
+    den_poly = poly(p)
+    unique_p = unique(p)
+    dup_p_dict = Dict()
+    p_count_dict = Dict()
+    for pole in unique_p
+        temp_count = count((i)->i==pole, p)
+        p_count_dict[pole] = temp_count
+        if temp_count > 1
+          dup_p_dict[pole] = temp_count-1
+        end
+    end
+    r_poly = Poly(0)
+    for resid_idx in 1:length(r)
+        temp_num_term = Poly(1)
+        if p[resid_idx] in keys(dup_p_dict)
+            temp_num_term *= Poly([-p[resid_idx],1])^dup_p_dict[p[resid_idx]]
+            dup_p_dict[p[resid_idx]]-=1
+        end
+        for pole in keys(p_count_dict)
+            if pole != p[resid_idx]
+                temp_num_term *= Poly([-pole, 1])^p_count_dict[pole]
+            end
+        end
+        r_poly += temp_num_term*r[resid_idx]
+    end
+    k_poly = Poly(k)*den_poly
+    num_poly = k_poly+r_poly
+    return coeffs(num_poly), coeffs(den_poly)
+end

@@ -41,6 +41,7 @@ export  RationalFunction,
         degree,
         roots,
         variable,
+        residue,
         # Other functions
         derivative,
         funcfit,
