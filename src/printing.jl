@@ -1,13 +1,13 @@
-summary{T,S,U,V}(::RationalFunction{Val{T},Val{S},U,V})  = "RF{Val{$T},Val{$S},$U,$V}"
+summary(::RationalFunction{Val{T},Val{S},U,V}) where {T,S,U,V} = "RF{Val{$T},Val{$S},$U,$V}"
 
 # Compact representations
-function _compact{T,S}(stream, ::MIME"text/plain", r::RationalFunction{Val{T},Val{S}})
+function _compact(stream, ::MIME"text/plain", r::RationalFunction{Val{T},Val{S}}) where {T,S}
   var = ifelse(S == :conj, "$(T)̄", "$(T)")
   # print(stream, "num($(var))/den($(var))")
   print(stream, "n($(var))/d($(var))")
 end
 
-function _compact{T,S}(stream, ::MIME"text/latex", r::RationalFunction{Val{T},Val{S}})
+function _compact(stream, ::MIME"text/latex", r::RationalFunction{Val{T},Val{S}}) where {T,S}
   var = ifelse(S == :conj, "\\bar{$(T)}", "$(T)")
   print(stream, "\$")
   # print(stream, "\\tfrac{\\mathrm{num}($(var))}{\\mathrm{den}($(var))}")
@@ -18,7 +18,7 @@ end
 # TODO: Think about text/html
 
 # Full representations
-function _full{T,S}(stream, m::MIME"text/plain", r::RationalFunction{Val{T},Val{S}})
+function _full(stream, m::MIME"text/plain", r::RationalFunction{Val{T},Val{S}}) where {T,S}
   var = ifelse(S == :conj, "$(T)̄", "$(T)")
   println(stream, "f($(var)) = num($(var))/den($(var)), where,")
   print(stream, "num($(T)) is ")
@@ -29,7 +29,7 @@ function _full{T,S}(stream, m::MIME"text/plain", r::RationalFunction{Val{T},Val{
   print(stream, ".")
 end
 
-function _full{T,S}(stream, m::MIME"text/latex", r::RationalFunction{Val{T},Val{S}})
+function _full(stream, m::MIME"text/latex", r::RationalFunction{Val{T},Val{S}}) where {T,S}
   var = ifelse(S == :conj, "\\bar{$(T)}", "$(T)")
   print(stream, "\$\$")
   print(stream, "f($(var)) = \\frac{\\mathrm{num}($(var))}{\\mathrm{den}($(var))}\\,,")
