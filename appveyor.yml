@@ -1,34 +1,25 @@
 environment:
   matrix:
-    - platform: x86
-      julia: 0.4
-      link: "julialang/bin/winnt/x86/0.4/julia-0.4-latest-win32.exe"
-    - platform: x86
-      julia: 0.5
-      link: "julialang/bin/winnt/x86/0.5/julia-0.5-latest-win32.exe"
-    - platform: x86
-      julia: 0.6
-      link: "julialang/bin/winnt/x86/0.6/julia-0.6-latest-win32.exe"
-    - platform: x86
-      julia: nightly
-      link: "julianightlies/bin/winnt/x86/julia-latest-win32.exe"
-    - platform: x64
-      julia: 0.4
-      link: "julialang/bin/winnt/x64/0.4/julia-0.4-latest-win64.exe"
-    - platform: x64
-      julia: 0.5
-      link: "julialang/bin/winnt/x64/0.5/julia-0.5-latest-win64.exe"
-    - platform: x64
-      julia: 0.6
-      link: "julialang/bin/winnt/x64/0.6/julia-0.6-latest-win64.exe"
-    - platform: x64
-      julia: nightly
-      link: "julianightlies/bin/winnt/x64/julia-latest-win64.exe"
+  - julia_version: 1.0
+  - julia_version: 1.1
+  - julia_version: 1.2
+  - julia_version: 1.3
+  - julia_version: 1.4
+  - julia_version: nightly
+
+platform:
+  - x86 # 32-bit
+  - x64 # 64-bit
 
 matrix:
   fast_finish: true
   allow_failures:
     - julia: nightly
+
+branches:
+  only:
+    - master
+    - /release-.*/
 
 notifications:
   - provider: Email
@@ -37,19 +28,15 @@ notifications:
     on_build_status_changed: false
 
 install:
-  - ps: "[System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12"
-  - ps: (new-object net.webclient).DownloadFile(
-        $("http://s3.amazonaws.com/"+$env:link),
-        "C:\projects\julia-binary.exe")
-  - C:\projects\julia-binary.exe /S /D=C:\projects\julia
+  - ps: iex ((new-object net.webclient).DownloadString("https://raw.githubusercontent.com/JuliaCI/Appveyor.jl/version-1/bin/install.ps1"))
 
 build_script:
-  - IF EXIST .git\shallow (git fetch --unshallow)
-  - C:\projects\julia\bin\julia -e "versioninfo();
-      Pkg.clone(pwd(), \"RationalFunctions\"); Pkg.build(\"RationalFunctions\")"
+  - echo "%JL_BUILD_SCRIPT%"
+  - C:\julia\bin\julia -e "%JL_BUILD_SCRIPT%"
 
 test_script:
-  - C:\projects\julia\bin\julia -e "Pkg.test(\"RationalFunctions\")"
+  - echo "%JL_TEST_SCRIPT%"
+  - C:\julia\bin\julia -e "%JL_TEST_SCRIPT%"
   - C:\projects\julia\bin\julia -e "Pkg.dir(\"RationalFunctions\") |> println" > folder.txt
   - set /p TEST_FOLDER=<folder.txt
   - move %TEST_FOLDER%\test\test-plot.png test-plot-win-%PLATFORM%-%JULIA%.png

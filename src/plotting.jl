@@ -1,8 +1,7 @@
 @recipe function f{T,S,U<:Real,V<:Real,W<:Real,Z<:Real}(r::RationalFunction{Val{T},Val{S},U,V},
   x::AbstractVector, xinit::AbstractVector{W}, yinit::AbstractVector{Z})
   if length(xinit) ≠ length(yinit)
-    warn("plot(r, x, xinit, yinit): length(xinit) ≠ length(yinit)")
-    throw(DomainError())
+    throw(DomainError((r, x, xinit, yinit), "plot(r, x, xinit, yinit): length(xinit) ≠ length(yinit)"))
   end
 
   # Some defaults
