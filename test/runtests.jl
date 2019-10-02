@@ -2,8 +2,9 @@ using Plots
 gr(display = false)
 
 using Polynomials
+using LinearAlgebra
 using RationalFunctions
-using Base.Test
+using Test
 
 # Constructor tests
 ## Construction from polynomials
@@ -90,23 +91,23 @@ r2 = conj(r1)
 realinput = [1., 2., 3., 4., 5.]
 imaginput = realinput + [0.1, -0.2, 0.3, -0.4, 0.5]*1im
 
-@test_approx_eq(r1(realinput), r2(realinput))
-@test_approx_eq(r1(imaginput), conj(r2(imaginput)))
+@test r1(realinput) ≈ r2(realinput)
+@test r1(imaginput) ≈ conj(r2(imaginput))
 
 r1  = RationalFunction(3p1, 5p1)
 r2  = RationalFunction(3p1, 5p2)
 r3  = RationalFunction(3p2, 5p1)
 
-@test_approx_eq(r1(1), 3/5)
-@test_approx_eq(r2(1), 0)
-@test_approx_eq(r3(1), Inf)
+@test r1(1) ≈ 3/5
+@test r2(1) ≈ 0
+@test r3(1) ≈ Inf
 
-@test_approx_eq(r1(realinput), fill(3/5, size(realinput)))
-@test_approx_eq(r1(imaginput), fill(3/5, size(realinput)))
+@test r1(realinput) ≈ fill(3/5, size(realinput))
+@test r1(imaginput) ≈ fill(3/5, size(realinput))
 
-@test_approx_eq(r1(Inf), 3/5)
-@test_approx_eq(r2(Inf), 0)
-@test_approx_eq(r3(Inf), Inf)
+@test r1(Inf) ≈ 3/5
+@test r2(Inf) ≈ 0
+@test r3(Inf) ≈ Inf
 
 ## Function fitting
 x   = -2:1E-1:2
@@ -138,8 +139,8 @@ r3 = transpose(r1)
 r1 = RationalFunction([1+1im, 2.], [1-3im, 5, 8im])
 r2 = conj(r1)
 
-@test num(r1) == conj(num(r2))
-@test den(r1) == conj(den(r2))
+@test numerator(r1) == conj(numerator(r2))
+@test denominator(r1) == conj(denominator(r2))
 
 # test related to #2
 m1 = fill(r1,1,1) # [r1]
@@ -179,14 +180,14 @@ r1 = RationalFunction(1, [-1, 1], :x) # r1 =  1/(x-1)
 r2 = RationalFunction(-1, [1, 1], :x) # r2 = -1/(x+1)
 r3 = RationalFunction(1, [-1, 1], :s) # r3 =  1/(s-1)
 
-for op in (:+, :-, :*, :/, :dot, :.+, :.-, :.*, :./)
+for op in (:+, :-, :*, :/, :dot)
   @test_throws DomainError eval( :(($op)(r1, r3)) )
 end
 
-@test r1+r2 ≈ r1 .+ r2 ≈ RationalFunction( 2    , [-1, 0, 1])
-@test r1-r2 ≈ r1 .- r2 ≈ RationalFunction([0, 2], [-1, 0, 1])
-@test r1*r2 ≈ r1 .* r2 ≈ dot(r1, r2) ≈ RationalFunction(-1, [-1, 0, 1])
-@test r1/r2 ≈ r1 ./ r2 ≈ inv(r2/r1) ≈ -RationalFunction([1, 1], [-1, 1])
+@test r1+r2 ≈ RationalFunction( 2    , [-1, 0, 1])
+@test r1-r2 ≈ RationalFunction([0, 2], [-1, 0, 1])
+@test r1*r2 ≈ dot(r1, r2) ≈ RationalFunction(-1, [-1, 0, 1])
+@test r1/r2 ≈ inv(r2/r1) ≈ -RationalFunction([1, 1], [-1, 1])
 
 ### Between polynomials
 p1 = Poly([1, 1], :x)     # p1 = (x+1)
@@ -202,15 +203,15 @@ r1 = RationalFunction(p1) # r1 = (x+1)/1
 
 r1 = RationalFunction([0, 1, 1], [-1, 1], :x) # r1 = x(x+1)/(x-1)
 
-for op in (:+, :-, :*, :/, :dot, :.+, :.-, :.*, :./)
+for op in (:+, :-, :*, :/, :dot)
   @test_throws DomainError eval( :(($op)(r1, p2)) )
   @test_throws DomainError eval( :(($op)(p2, r1)))
 end
 
-@test p1+r1 ≈ p1 .+ r1 ≈ r1+p1 ≈ r1 .+ p1 ≈ RationalFunction([-1, 1, 2], [-1, 1])
-@test r1-p1 ≈ r1 .- p1 ≈ -(p1-r1) ≈ -(p1 .- r1) ≈ RationalFunction([1, 1],[-1, 1])
-@test r1*p1 ≈ r1 .* p1 ≈ dot(r1, p1) ≈ p1*r1 ≈ p1 .* r1 ≈ dot(p1, r1) ≈ RationalFunction([0, 1, 2, 1], [-1, 1])
-@test r1/p1 ≈ r1 ./ p1 ≈ inv(p1/r1) ≈ inv(p1 ./ r1) ≈ RationalFunction([0, 1], [-1, 1])
+@test p1+r1 ≈ r1+p1       ≈ RationalFunction([-1, 1, 2], [-1, 1])
+@test r1-p1 ≈ -(p1-r1)    ≈ RationalFunction([1, 1],[-1, 1])
+@test r1*p1 ≈ dot(r1, p1) ≈ p1*r1 ≈ dot(p1, r1) ≈ RationalFunction([0, 1, 2, 1], [-1, 1])
+@test r1/p1 ≈ inv(p1/r1)  ≈ RationalFunction([0, 1], [-1, 1])
 
 ### Between numbers
 n   = 3.
@@ -224,10 +225,10 @@ r1  = RationalFunction(n*[1, 1], [1, 1])
 
 r1  = RationalFunction([-1, 1], [1, 1]) # r1 = (x-1)/(x+1)
 
-@test r1+n ≈ r1 .+ n ≈ n+r1 ≈ n .+ r1 ≈ RationalFunction([2, 4], [1, 1])
-@test r1-n ≈ r1 .- n ≈ -(n-r1) ≈ -(n .- r1) ≈ RationalFunction([-4, -2], [1, 1])
-@test r1*n ≈ r1 .* n ≈ dot(r1, n) ≈ n*r1 ≈ n .* r1 ≈ dot(n, r1) ≈ RationalFunction([-3, 3], [1, 1])
-@test r1/n ≈ r1 ./ n ≈ inv(n/r1) ≈ inv(n ./ r1) ≈ RationalFunction([-1, 1], [3, 3]) ≈ RationalFunction([-1, 1]/3, [1, 1])
+@test r1+n ≈ n+r1 ≈ RationalFunction([2, 4], [1, 1])
+@test r1-n ≈ -(n-r1) ≈ RationalFunction([-4, -2], [1, 1])
+@test r1*n ≈ dot(r1, n) ≈ n*r1 ≈ dot(n, r1) ≈ RationalFunction([-3, 3], [1, 1])
+@test r1/n ≈ inv(n/r1) ≈ RationalFunction([-1, 1], [3, 3]) ≈ RationalFunction([-1, 1]/3, [1, 1])
 
 ## Solution of rational function equalities
 r1 = RationalFunction([-1, 1], [ 1, 1], :x) # r1 = (x-1)/(x+1)
@@ -287,8 +288,8 @@ num2, den2 = residue(r, p, k)
 num1 = [10, 2]
 den1 = [0, 10, 2, 1]
 r, p, k = residue(num1, den1)
-@test r ≈ [-0.5-(1/6)im, -0.5+(1/6)im, 1.0+0.0im]
-@test p ≈ [-1.0+3.0im, -1.0-3.0im, 0.0+0.0im]
+@test r ≈ [-0.5+(1/6)im, -0.5-(1/6)im, 1.0+0.0im]
+@test p ≈ [-1.0-3.0im, -1.0+3.0im, 0.0+0.0im]
 @test k ≈ [0.0]
 num2, den2 = residue(r, p, k)
 #@test num1 ≈ num2 #Cannot pass due to erroneous third, imaginary root. Numerical errors?

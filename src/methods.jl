@@ -118,14 +118,13 @@ end
 
 function isapprox(r1::RationalFunction{Val{T1},Val{S1}},
   r2::RationalFunction{Val{T2},Val{S2}}; rtol::Real = 0, atol::Real = 0) where {T1,S1,T2,S2}
-  warn("r1≈r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
-  throw(DomainError())
+  throw(DomainError((r1,r2), "r1≈r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables"))
 end
 
 # Function evaluation
 function _funceval(r::RationalFunction, x::Number)
   mindegree = min(degree(r)...)
-  result    = r.numerator(x)/r.denominator(x)
+  result    = r.num(x)/r.den(x)
   !isnan(result) && return result
 
   k         = 1
@@ -135,7 +134,7 @@ function _funceval(r::RationalFunction, x::Number)
     # Apply L'Hospital
     num     = polyder(num)
     den     = polyder(den)
-    result  = numerator(x)/denominator(x)
+    result  = num(x)/den(x)
     k      += 1
   end
   result
@@ -166,14 +165,11 @@ where `n, r = divrem(length(x), 2)` and `m = n - 1 + r`.
 """
 function funcfit(x, y, m::Int, n::Int, var::SymbolLike = :x)
   if length(x) ≠ length(y)
-    warn("funcfit(x, y, m, n, var): length(x) ≠ length(y)")
-    throw(DomainError())
+    throw(DomainError((x,y,m,n,var), "funcfit(x, y, m, n, var): length(x) ≠ length(y)"))
   elseif m < 0 || n < 0
-    warn("funcfit(x, y, m, n, var): `m` and `n` must be non-negative")
-    throw(DomainError())
+    throw(DomainError((x,y,m,n,var), "funcfit(x, y, m, n, var): `m` and `n` must be non-negative"))
   elseif m + n + 1 > length(x)
-    warn("funcfit(x, y, m, n, var): not enough data points for given degrees")
-    throw(DomainError())
+    throw(DomainError((x,y,m,n,var), "funcfit(x, y, m, n, var): not enough data points for given degrees"))
   end
 
   T   = promote_type(eltype(x), eltype(y))
@@ -218,8 +214,7 @@ Take the `n`th order derivative of `r`.
 """
 function derivative(r::RationalFunction{T,S}, n::Int = 1) where {T,S}
   if n < 0
-    warn("derivative(r, n): `n` must be non-negative")
-    throw(DomainError())
+    throw(DomainError((r, n),"derivative(r, n): `n` must be non-negative" ))
   end
   n == 0 && return copy(r)
   num   = polyder(r.num)*r.den - r.num*polyder(r.den)
@@ -264,8 +259,7 @@ function +(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{
 end
 
 function +(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}}) where {T1,S1,T2,S2}
-  warn("r1+r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
-  throw(DomainError())
+  throw(DomainError((r1, r2), "r1+r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables"))
 end
 
 function *(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{S}}) where {T,S}
@@ -275,11 +269,12 @@ function *(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{
 end
 
 function *(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}}) where {T1,S1,T2,S2}
-  warn("r1*r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
-  throw(DomainError())
+  throw(DomainError((r1, r2), "r1*r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables"))
 end
 
 dot(r1::RationalFunction, r2::RationalFunction) = *(r1, r2)
+
+^(r::RationalFunction, n::Integer) = Base.power_by_squaring(r,n)
 
 function /(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{S}}) where {T,S}
   num = r1.num * r2.den
@@ -288,11 +283,10 @@ function /(r1::RationalFunction{Val{T},Val{S}}, r2::RationalFunction{Val{T},Val{
 end
 
 function /(r1::RationalFunction{Val{T1},Val{S1}}, r2::RationalFunction{Val{T2},Val{S2}}) where {T1,S1,T2,S2}
-  warn("r1/r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables")
-  throw(DomainError())
+  throw(DomainError((r1, r2), "r1/r2: `r1` ($T1,Val{$S1}) and `r2` ($T2,Val{$S2}) have different variables"))
 end
 
--(r::RationalFunction{T,S}) where {T,S}         = RationalFunction(-r.num, copy(r.den), S) where {T,S}
+-(r::RationalFunction{T,S}) where {T,S}         = RationalFunction(-r.num, copy(r.den), S)
 
 -(r1::RationalFunction, r2::RationalFunction)   = +(r1, -r2)
 
@@ -327,19 +321,17 @@ end
 function isapprox(r::RationalFunction{Val{T},S,U,V}, p::Poly{Z};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) where {T,S,U,V,Z<:Number}
   if T ≠ p.var
-    warn("r≈p: `r` ($T) and `p` ($(p.var)) have different variables")
-    throw(DomainError())
+    throw(DomainError((r,p), "r≈p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   isapprox(coeffs(r.num), coeffs(p*r.den); rtol = rtol, atol = atol)
 end
 isapprox(p::Poly{Z}, r::RationalFunction{Val{T},S,U,V};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) where {T,S,U,V,Z<:Number} =
-  isapprox(r, p; rtol = rtol, atol = atol) where {T,S,U,V,Z<:Number}
+  isapprox(r, p; rtol = rtol, atol = atol)
 
 function +(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
   if T ≠ p.var
-    warn("r+p: `r` ($T) and `p` ($(p.var)) have different variables")
-    throw(DomainError())
+    throw(DomainError((r,p), "r+p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(r.num + p*r.den, r.den, S)
 end
@@ -347,8 +339,7 @@ end
 
 function *(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
   if T ≠ p.var
-    warn("r*p: `r` ($T) and `p` ($(p.var)) have different variables")
-    throw(DomainError())
+    throw(DomainError((r,p), "r*p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(p*r.num, r.den, S)
 end
@@ -358,16 +349,14 @@ dot(p::Poly, r::RationalFunction)         = *(r, p)
 
 function /(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
   if T ≠ p.var
-    warn("r/p: `r` ($T) and `p` ($(p.var)) have different variables")
-    throw(DomainError())
+    throw(DomainError((r,p), "r/p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(r.num, p*r.den, S)
 end
 
 function /(p::Poly, r::RationalFunction{Val{T},S}) where {T,S}
   if T ≠ p.var
-    warn("p/r: `p` ($(p.var)) and `r` ($T) have different variables")
-    throw(DomainError())
+    throw(DomainError((r,p), "p/r: `p` ($(p.var)) and `r` ($T) have different variables"))
   end
   RationalFunction(p*r.den, r.num, S)
 end
@@ -407,8 +396,7 @@ end
 
 function solve(lhs::RationalFunction{Val{T1},Val{S1}},
   rhs::RationalFunction{Val{T2},Val{S2}}) where {T1,S1,T2,S2}
-  warn("solve(lhs,rhs): `lhs` ($T1,Val{$S1}) and `rhs` ($T2,Val{$S2}) have different variables")
-  throw(DomainError())
+  throw(DomainError((lhs,rhs), "solve(lhs,rhs): `lhs` ($T1,Val{$S1}) and `rhs` ($T2,Val{$S2}) have different variables"))
 end
 
 ### Given rational function, return partial fraction decomposition

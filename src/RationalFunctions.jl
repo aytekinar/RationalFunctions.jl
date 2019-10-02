@@ -27,7 +27,7 @@ import Base: one, zero
 import Base: isapprox, hash, isequal, transpose, conj
 
 # Import mathematical operations for overloading
-import Base: +, -, *, inv, /, ==
+import Base: +, -, *, inv, /, ==, ^
 import LinearAlgebra: dot
 
 # Import functions from Polynomials

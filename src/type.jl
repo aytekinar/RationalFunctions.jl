@@ -57,65 +57,62 @@ struct RationalFunction{T,S,U,V}
   @compat function (::Type{RationalFunction})(num::Poly{U}, den::Poly{V},
     ::Type{Val{:conj}}) where {U<:Number,V<:Number}
     if num.var ≠ den.var
-      warn("RationalFunction(num,den): num and den `Poly`s have different variables")
-      throw(DomainError())
+      throw(DomainError((num, den), "RationalFunction(num,den): num and den `Poly`s have different variables"))
     end
     new{Val{num.var},Val{:conj},U,V}(num,den)
   end
   @compat function (::Type{RationalFunction})(num::Poly{U}, den::Poly{V},
     ::Type{Val{:notc}}) where {U<:Number,V<:Number}
     if num.var ≠ den.var
-      warn("RationalFunction(num,den): num and den `Poly`s have different variables")
-      throw(DomainError())
+      throw(DomainError((num, den), "RationalFunction(num,den): num and den `Poly`s have different variables"))
     end
     new{Val{num.var},Val{:notc},U,V}(num,den)
   end
   @compat function (::Type{RationalFunction})(num::Poly{U}, den::Poly{V}) where
     {U<:Number,V<:Number}
     if num.var ≠ den.var
-      warn("RationalFunction(num,den): num and den `Poly`s have different variables")
-      throw(DomainError())
+      throw(DomainError((num, den), "RationalFunction(num,den): num and den `Poly`s have different variables"))
     end
     new{Val{num.var},Val{:notc},U,V}(num,den)
   end
 end
 
 # Partial construction from `Poly`s
-RationalFunction{S}(num::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
+RationalFunction(num::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
   RationalFunction(num, one(num), conj)
 
 # Full construction from `Number`s, `Vector`s and `Poly`s
-RationalFunction{S}(num::Number, den::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
+RationalFunction(num::Number, den::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
   RationalFunction(Poly([num], den.var), den, conj)
 
-RationalFunction{S}(num::Poly, den::Number, conj::Type{Val{S}} = Val{:notc}) where {S} =
+RationalFunction(num::Poly, den::Number, conj::Type{Val{S}} = Val{:notc}) where {S} =
   RationalFunction(num, Poly([den], num.var), conj)
 
-RationalFunction{S}(num::Vector, den::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
+RationalFunction(num::Vector, den::Poly, conj::Type{Val{S}} = Val{:notc}) where {S} =
   RationalFunction(Poly(num, den.var), den, conj)
 
-RationalFunction{S}(num::Poly, den::Vector, conj::Type{Val{S}} = Val{:notc}) where {S} =
+RationalFunction(num::Poly, den::Vector, conj::Type{Val{S}} = Val{:notc}) where {S} =
   RationalFunction(num, Poly(den, num.var), conj)
 
 # Full construction from numbers and vectors
-RationalFunction{S}(num::Vector, den::Vector, var::SymbolLike = :x,
+RationalFunction(num::Vector, den::Vector, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S} = RationalFunction(Poly(num, var), Poly(den, var), conj)
 
-RationalFunction{S}(num::Number, den::Number, var::SymbolLike = :x,
+RationalFunction(num::Number, den::Number, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S} = RationalFunction(Poly([num], var), Poly([den], var), conj)
 
-RationalFunction{S}(num::Vector, den::Number, var::SymbolLike = :x,
+RationalFunction(num::Vector, den::Number, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S} = RationalFunction(Poly(num, var), Poly([den], var), conj)
 
-RationalFunction{S}(num::Number, den::Vector, var::SymbolLike = :x,
+RationalFunction(num::Number, den::Vector, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S} = RationalFunction(Poly([num], var), Poly(den, var), conj)
 
 # Partial construction from numbers and vectors
-RationalFunction{S,U}(num::Vector{U}, var::SymbolLike = :x,
+RationalFunction(num::Vector{U}, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S,U<:Number} = RationalFunction(Poly(num, var),
   Poly([one(U)], var), conj)
 
-RationalFunction{S,U}(num::U, var::SymbolLike = :x,
+RationalFunction(num::U, var::SymbolLike = :x,
   conj::Type{Val{S}} = Val{:notc}) where {S,U<:Number} = RationalFunction(Poly([num], var),
   Poly([one(U)], var), conj)
 
@@ -126,8 +123,7 @@ Create a `Poly` object from `r` if `degree(den(r)) == 0`.
 """
 function Poly(r::RationalFunction)
   if degree(r.den) ≠ 0
-    warn("Poly(r): r.den is not constant")
-    throw(DomainError())
+    throw(DomainError(r.den, "Poly(r): r.den is not constant"))
   end
   r.num / r.den[0]
 end
