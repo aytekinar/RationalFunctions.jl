@@ -8,9 +8,9 @@ using Test
 
 # Constructor tests
 ## Construction from polynomials
-px_ = Poly([1,-2,1])     # px_ = (x-1)(x-1)
-qx = poly([1,2,3])      # qx = (x-1)(x-2)(x-3)
-ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
+px_ = Polynomial([1,-2,1])     # px_ = (x-1)(x-1)
+qx = fromroots([1,2,3])      # qx = (x-1)(x-2)(x-3)
+ps = Polynomial([1,-2,1], :s) # ps = (s-1)(s-1)
 
 @test isequal(RationalFunction(px_, qx), RationalFunction(px_, qx, Val{:notc}))
 @test isa(RationalFunction(px_, qx, Val{:conj}), RationalFunction{Val{px_.var}, Val{:conj}, eltype(px_), eltype(qx)})
@@ -21,7 +21,7 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test_throws DomainError RationalFunction(px_, ps, Val{:conj})
 
 @test isequal(RationalFunction(coeffs(px_), qx), RationalFunction(px_, coeffs(qx)))
-@test isequal(RationalFunction(1, Poly([2])), RationalFunction(Poly([1]), 2))
+@test isequal(RationalFunction(1, Polynomial([2])), RationalFunction(Polynomial([1]), 2))
 
 ## Construction from numbers and vectors
 @test isequal(RationalFunction(1, [1, 2]), RationalFunction([1], [1, 2]))
@@ -30,18 +30,18 @@ ps = Poly([1,-2,1], :s) # ps = (s-1)(s-1)
 @test isa(RationalFunction(1), RationalFunction{Val{:x}, Val{:notc}, Int, Int})
 @test isa(RationalFunction([1, 2.], 's', Val{:conj}), RationalFunction{Val{:s}, Val{:conj}, Float64, Float64})
 
-## `Poly` construction from `RationalFunction`s
+## `Polynomial` construction from `RationalFunction`s
 r1 = RationalFunction(px_, qx)
-r2 = RationalFunction(px_, Poly([4]))
+r2 = RationalFunction(px_, Polynomial([4]))
 
-@test isapprox(coeffs(Poly(r2)), coeffs(px_/4))
-@test_throws DomainError Poly(r1)
+@test isapprox(coeffs(Polynomial(r2)), coeffs(px_/4))
+@test_throws DomainError Polynomial(r1)
 
 # Conversion tests
 v1 = [1, 2, 3]
 v2 = [1., 2., 3.]
 v3 = [1 + 1im, 2. - 1im]
-p3 = poly(v3)
+p3 = fromroots(v3)
 @test eltype([RationalFunction(v1, v2), RationalFunction(v2, v1)])  ==
   RationalFunction{Val{:x}, Val{:notc}, promote_type(eltype(v1), eltype(v2)),
     promote_type(eltype(v1), eltype(v2))}
@@ -82,8 +82,8 @@ r3 = RationalFunction([-0., 1, 2], :x)
 @test r1 == r3 && r1 ≈ r3 && !isequal(r1, r3)
 
 ## Function evaluation
-p1 = Poly([1,-2,1])     # p1 = (x-1)(x-1)
-p2 = poly([1,2,3])      # p2 = (x-1)(x-2)(x-3)
+p1 = Polynomial([1,-2,1])     # p1 = (x-1)(x-1)
+p2 = fromroots([1,2,3])      # p2 = (x-1)(x-2)(x-3)
 
 r1 = RationalFunction(p1, p2)
 r2 = conj(r1)
@@ -158,11 +158,11 @@ r4 = convert(typeof(r2), r1)
 ## Derivative and reduction
 ### p1 = (x-1)(x-1)
 ### p2 = (x-1)(x-2)(x-3)
-p3 = poly([1])    # p3 = (x-1)
-p4 = poly([2,3])  # p4 = (x-2)(x-3)
+p3 = fromroots([1])    # p3 = (x-1)
+p4 = fromroots([2,3])  # p4 = (x-2)(x-3)
 
 r1      = RationalFunction(p1, p2)
-result  = RationalFunction(polyder(p3)*p4 - p3*polyder(p4), p4^2)
+result  = RationalFunction(derivative(p3)*p4 - p3*derivative(p4), p4^2)
 @test derivative(r1) == result
 @test !isequal(derivative(r1), result)
 
@@ -171,7 +171,7 @@ result  = RationalFunction(polyder(p3)*p4 - p3*polyder(p4), p4^2)
 r1 = RationalFunction(p1, p1)
 @test derivative(r1, 0) == r1
 @test derivative(r1) == 0
-@test derivative(RationalFunction(1, p3), 2) == RationalFunction(2, poly([1; 1; 1]))
+@test derivative(RationalFunction(1, p3), 2) == RationalFunction(2, fromroots([1; 1; 1]))
 @test_throws DomainError derivative(r1, -1)
 
 ## Mathematical operations
@@ -190,8 +190,8 @@ end
 @test r1/r2 ≈ inv(r2/r1) ≈ -RationalFunction([1, 1], [-1, 1])
 
 ### Between polynomials
-p1 = Poly([1, 1], :x)     # p1 = (x+1)
-p2 = Poly([1, 1], :s)     # p2 = (s+1)
+p1 = Polynomial([1, 1], :x)     # p1 = (x+1)
+p2 = Polynomial([1, 1], :s)     # p2 = (s+1)
 r1 = RationalFunction(p1) # r1 = (x+1)/1
 
 @test p1 == r1 == p1
@@ -241,12 +241,12 @@ r3 = RationalFunction([-1, 1], [-1, 1], :s) # r3 = (s-1)/(s-1)
 @test solve(5, r1) ≈ solve(r1, 5) ≈ [-3/2]
 @test_throws ErrorException solve(5r3, 5)
 
-### w.r.t `Poly`s
-p1    = Poly([-1, 1])
+### w.r.t `Polynomial`s
+p1    = Polynomial([-1, 1])
 sln1  = solve(r1, p1)
 sln2  = solve(p1, r1)
 @test (sln1 ≈ [0, 1] || sln1 ≈ [1, 0]) && (sln2 ≈ [0, 1] || sln2 ≈ [1, 0])
-@test solve(r1, Poly([0])) ≈ [1]
+@test solve(r1, Polynomial([0])) ≈ [1]
 @test_throws DomainError solve(r3, p1)
 @test_throws ErrorException solve(p1, RationalFunction(p1))
 
@@ -288,8 +288,12 @@ num2, den2 = residue(r, p, k)
 num1 = [10, 2]
 den1 = [0, 10, 2, 1]
 r, p, k = residue(num1, den1)
-@test r ≈ [-0.5+(1/6)im, -0.5-(1/6)im, 1.0+0.0im]
-@test p ≈ [-1.0-3.0im, -1.0+3.0im, 0.0+0.0im]
+@test length(findall(x -> x ≈ -0.5-(1/6)im, r)) == 1
+@test length(findall(x -> x ≈ -0.5+(1/6)im, r)) == 1
+@test length(findall(x -> x ≈  1.0+  0.0im, r)) == 1
+@test length(findall(x -> x ≈ -1.0-  3.0im, p)) == 1
+@test length(findall(x -> x ≈ -1.0+  3.0im, p)) == 1
+@test length(findall(x -> x ≈  0.0+  0.0im, p)) == 1
 @test k ≈ [0.0]
 num2, den2 = residue(r, p, k)
 #@test num1 ≈ num2 #Cannot pass due to erroneous third, imaginary root. Numerical errors?

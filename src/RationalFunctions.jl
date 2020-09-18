@@ -31,7 +31,7 @@ import Base: +, -, *, inv, /, ==, ^
 import LinearAlgebra: dot
 
 # Import functions from Polynomials
-import Polynomials: coeffs, degree, roots, variable, Poly
+import Polynomials: coeffs, degree, derivative, roots, variable, Polynomial
 
 # Import num/den-type of functions
 import Base: numerator, denominator, zeros, reduce

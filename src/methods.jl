@@ -34,18 +34,18 @@ See also: `num`, `den`, `zeros`, `poles`, `solve`.
 roots(r::RationalFunction)  = (roots(r.num), roots(r.den))
 
 """
-    variable(r::RationalFunction) -> Tuple{Poly,Poly,Val}
+    variable(r::RationalFunction) -> Tuple{Polynomial,Polynomial,Val}
 
 Return the variables of the numerator and denominator polynomials of `r` as well
 as the conjugation property.
 """
 variable(::Type{RationalFunction{Val{T},Val{S},U,V}}) where {T,S,U,V} =
-  (variable(U, T), variable(V, T), Val{S})
+  (variable(Polynomial{U}, T), variable(Polynomial{V}, T), Val{S})
 variable(r::RationalFunction{Val{T},Val{S},U,V}) where {T,S,U,V} =
-  (variable(U, T), variable(V, T), Val{S})
+  (variable(Polynomial{U}, T), variable(Polynomial{V}, T), Val{S})
 
 """
-    numerator(r::RationalFunction) -> Poly
+    numerator(r::RationalFunction) -> Polynomial
 
 Return the numerator polynomial of `r`.
 
@@ -54,7 +54,7 @@ See also: `den`.
 numerator(r::RationalFunction)    = r.num
 
 """
-    denominator(r::RationalFunction) -> Poly
+    denominator(r::RationalFunction) -> Polynomial
 
 Return the denominator polynomial of `r`.
 
@@ -82,11 +82,11 @@ poles(r::RationalFunction)  = (rnew = reduce(r); roots(rnew.den))
 
 ## Identities
 one(::Type{RationalFunction{Val{T},Val{S},U,V}}) where {T,S,U,V}  =
-  RationalFunction(Poly([one(U)], T), Poly([one(V)], T), Val{S})
+  RationalFunction(Polynomial([one(U)], T), Polynomial([one(V)], T), Val{S})
 one(r::RationalFunction{T,S}) where {T,S}                         =
   RationalFunction(one(r.num), one(r.den), S)
 zero(::Type{RationalFunction{Val{T},Val{S},U,V}}) where {T,S,U,V} =
-  RationalFunction(Poly(U[], T), Poly([one(V)], T), Val{S})
+  RationalFunction(Polynomial(U[], T), Polynomial([one(V)], T), Val{S})
 zero(r::RationalFunction{T,S}) where {T,S}                        =
   RationalFunction(zero(r.num), one(r.den), S)
 
@@ -132,8 +132,8 @@ function _funceval(r::RationalFunction, x::Number)
   den       = r.den
   while isnan(result) && k ≤ mindegree
     # Apply L'Hospital
-    num     = polyder(num)
-    den     = polyder(den)
+    num     = derivative(num)
+    den     = derivative(den)
     result  = num(x)/den(x)
     k      += 1
   end
@@ -200,7 +200,7 @@ transpose(r::RationalFunction)      = copy(r)
 ## Conjugation
 function conj(r::RationalFunction{Val{T},Val{S}}) where {T,S}
   numcoeff, dencoeff = coeffs(r)
-  RationalFunction(Poly(conj(copy(numcoeff)), T), Poly(conj(copy(dencoeff)), T),
+  RationalFunction(Polynomial(conj(copy(numcoeff)), T), Polynomial(conj(copy(dencoeff)), T),
     Val{ifelse(S == :conj, :notc, :conj)})
 end
 # Related to #2. This is the solution in Julia v0.6 in `arraymath.jl`
@@ -217,11 +217,11 @@ function derivative(r::RationalFunction{T,S}, n::Int = 1) where {T,S}
     throw(DomainError((r, n),"derivative(r, n): `n` must be non-negative" ))
   end
   n == 0 && return copy(r)
-  num   = polyder(r.num)*r.den - r.num*polyder(r.den)
+  num   = derivative(r.num)*r.den - r.num*derivative(r.den)
   den   = r.den*r.den
   temp  = RationalFunction(num, den, S)
   for count in 2:n
-    num   = polyder(temp.num)*temp.den - temp.num*polyder(temp.den)
+    num   = derivative(temp.num)*temp.den - temp.num*derivative(temp.den)
     den   = temp.den*temp.den
     temp  = RationalFunction(num, den, S)
   end
@@ -311,65 +311,65 @@ dot(n::Number, r::RationalFunction)                = *(r, n)
 -(r::RationalFunction, n::Number)                  = +(r, -n)
 -(n::Number, r::RationalFunction)                  = +(-r, n)
 
-## Basic operations between `Poly`s
-function ==(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
+## Basic operations between `Polynomial`s
+function ==(r::RationalFunction{Val{T},S}, p::Polynomial) where {T,S}
   T ≠ p.var && return false
   return r.num == p*r.den
 end
-==(p::Poly, r::RationalFunction) = ==(r, p)
+==(p::Polynomial, r::RationalFunction) = ==(r, p)
 
-function isapprox(r::RationalFunction{Val{T},S,U,V}, p::Poly{Z};
+function isapprox(r::RationalFunction{Val{T},S,U,V}, p::Polynomial{Z};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) where {T,S,U,V,Z<:Number}
   if T ≠ p.var
     throw(DomainError((r,p), "r≈p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   isapprox(coeffs(r.num), coeffs(p*r.den); rtol = rtol, atol = atol)
 end
-isapprox(p::Poly{Z}, r::RationalFunction{Val{T},S,U,V};
+isapprox(p::Polynomial{Z}, r::RationalFunction{Val{T},S,U,V};
   rtol::Real = sqrt(eps(promote_type(U,V,Z))), atol::Real = 0) where {T,S,U,V,Z<:Number} =
   isapprox(r, p; rtol = rtol, atol = atol)
 
-function +(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
+function +(r::RationalFunction{Val{T},S}, p::Polynomial) where {T,S}
   if T ≠ p.var
     throw(DomainError((r,p), "r+p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(r.num + p*r.den, r.den, S)
 end
-+(p::Poly, r::RationalFunction) = +(r, p)
++(p::Polynomial, r::RationalFunction) = +(r, p)
 
-function *(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
+function *(r::RationalFunction{Val{T},S}, p::Polynomial) where {T,S}
   if T ≠ p.var
     throw(DomainError((r,p), "r*p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(p*r.num, r.den, S)
 end
-*(p::Poly, r::RationalFunction)           = *(r, p)
-dot(r::RationalFunction, p::Poly)         = *(r, p)
-dot(p::Poly, r::RationalFunction)         = *(r, p)
+*(p::Polynomial, r::RationalFunction)           = *(r, p)
+dot(r::RationalFunction, p::Polynomial)         = *(r, p)
+dot(p::Polynomial, r::RationalFunction)         = *(r, p)
 
-function /(r::RationalFunction{Val{T},S}, p::Poly) where {T,S}
+function /(r::RationalFunction{Val{T},S}, p::Polynomial) where {T,S}
   if T ≠ p.var
     throw(DomainError((r,p), "r/p: `r` ($T) and `p` ($(p.var)) have different variables"))
   end
   RationalFunction(r.num, p*r.den, S)
 end
 
-function /(p::Poly, r::RationalFunction{Val{T},S}) where {T,S}
+function /(p::Polynomial, r::RationalFunction{Val{T},S}) where {T,S}
   if T ≠ p.var
     throw(DomainError((r,p), "p/r: `p` ($(p.var)) and `r` ($T) have different variables"))
   end
   RationalFunction(p*r.den, r.num, S)
 end
 
--(r::RationalFunction, p::Poly) = +(r, -p)
--(p::Poly, r::RationalFunction) = +(-r, p)
+-(r::RationalFunction, p::Polynomial) = +(r, -p)
+-(p::Polynomial, r::RationalFunction) = +(-r, p)
 
 ## Solve
 """
     solve(lhs, rhs = 0) -> Vector
 
 Solve for the values which make `lhs = rhs`, where at least one of `lhs` and `rhs`
-is a `RationalFunction` while the other can be either a `Number` or a `Poly`.
+is a `RationalFunction` while the other can be either a `Number` or a `Polynomial`.
 
 See also: `zeros`, `poles`, `roots`.
 """
@@ -380,13 +380,13 @@ function solve(lhs::RationalFunction, rhs::Number = 0)
   zeros(lhs - rhs)
 end
 
-function solve(lhs::RationalFunction, rhs::Poly)
+function solve(lhs::RationalFunction, rhs::Polynomial)
   lhs == rhs        && error("solve(lhs,rhs): `lhs` and `rhs` are equal")
   rhs == zero(rhs)  && return zeros(lhs)
   zeros(lhs - rhs)
 end
 
-solve(lhs::PolyLike, rhs::RationalFunction) = solve(rhs, lhs)
+solve(lhs::PolynomialLike, rhs::RationalFunction) = solve(rhs, lhs)
 
 function solve(lhs::RationalFunction{Val{T},Val{S}},
   rhs::RationalFunction{Val{T},Val{S}}) where {T,S}
@@ -407,7 +407,7 @@ end
 Given a numerator and denominator of a polynomial fraction or a RationalFunction,
 return the partial fraction decomposition. The residues are returned as `r`, the
 poles as `p`, and the direct terms as `k`. Both numerator and denominator can be
-given as an array of coefficients or as Poly types.
+given as an array of coefficients or as Polynomial types.
 
 Duplicate poles are handled by each subsequent duplicate having the
 denominator's power raised by one. See package README for further explanation.
@@ -415,8 +415,8 @@ denominator's power raised by one. See package README for further explanation.
 # Examples
 ``` julia
 # Real poles with direct terms
-julia> num1 = Poly([6, 9, 16, 8, 1])
-julia> den1 = Poly([6, 11, 6, 1])
+julia> num1 = Polynomial([6, 9, 16, 8, 1])
+julia> den1 = Polynomial([6, 11, 6, 1])
 julia> residue(num1, den1)
 ([-6.0, -4.0, 3.0], [-3.0, -2.0, -1.0], [2.0, 1.0])
 
@@ -425,12 +425,12 @@ julia> residue([10, 2], [0, 10, 2, 1])
 (Complex{Float64}[-0.5-0.166667im, -0.5+0.166667im, 1.0+0.0im], Complex{Float64}[-1.0+3.0im, -1.0-3.0im, 0.0+0.0im], [0.0])
 
 # Duplicate poles
-julia> r_func = RationalFunction(Poly([1,0,1]),Poly([0,1])*Poly([-1,1])^2))
+julia> r_func = RationalFunction(Polynomial([1,0,1]),Polynomial([0,1])*Polynomial([-1,1])^2))
 julia> residue(r_func)
 ([-0.0, 2.0, 1.0], [1.0, 1.0, 0.0], [0.0])
 ```
 """
-function residue(num::Poly, den::Poly)
+function residue(num::Polynomial, den::Polynomial)
     p = roots(den)
     num_p = length(p)
     div_poly, rem_poly = divrem(num, den)
@@ -463,14 +463,14 @@ function residue(num::Poly, den::Poly)
     for col_idx in 1:num_p
         temp_p = p[col_idx]
         if temp_p in keys(dup_p_dict)
-            temp_poly = Poly([-temp_p, 1])^dup_p_dict[temp_p]
+            temp_poly = Polynomial([-temp_p, 1])^dup_p_dict[temp_p]
             dup_p_dict[temp_p]-=1
         else
-            temp_poly = Poly(1)
+            temp_poly = Polynomial(1)
         end
         for poly_idx in 1:num_p
             if p[poly_idx] != temp_p
-                temp_poly *= Poly([-p[poly_idx], 1])
+                temp_poly *= Polynomial([-p[poly_idx], 1])
             end
         end
         temp_coeffs = coeffs(temp_poly)
@@ -481,7 +481,7 @@ function residue(num::Poly, den::Poly)
     r = residue_mtx\rem_coeffs
     return r, p, k
 end
-residue(num::Vector{T}, den::Vector{T}) where {T<:Number} = residue(Poly(num), Poly(den))
+residue(num::Vector{T}, den::Vector{T}) where {T<:Number} = residue(Polynomial(num), Polynomial(den))
 residue(rfunc::RationalFunction) = residue(numerator(rfunc), denominator(rfunc))
 
 ### Conversely, given r, p, and k terms, return polynomial fraction
@@ -518,7 +518,7 @@ julia> residue(r, p, k)
 ```
 """
 function residue(r::Vector{T}, p::Vector{S}, k::Vector{U}) where {T<:Number,S<:Number,U<:Number}
-    den_poly = poly(p)
+    den_poly = fromroots(p)
     unique_p = unique(p)
     dup_p_dict = Dict()
     p_count_dict = Dict()
@@ -529,21 +529,21 @@ function residue(r::Vector{T}, p::Vector{S}, k::Vector{U}) where {T<:Number,S<:N
           dup_p_dict[pole] = temp_count-1
         end
     end
-    r_poly = Poly(0)
+    r_poly = Polynomial(0)
     for resid_idx in 1:length(r)
-        temp_num_term = Poly(1)
+        temp_num_term = Polynomial(1)
         if p[resid_idx] in keys(dup_p_dict)
-            temp_num_term *= Poly([-p[resid_idx],1])^dup_p_dict[p[resid_idx]]
+            temp_num_term *= Polynomial([-p[resid_idx],1])^dup_p_dict[p[resid_idx]]
             dup_p_dict[p[resid_idx]]-=1
         end
         for pole in keys(p_count_dict)
             if pole != p[resid_idx]
-                temp_num_term *= Poly([-pole, 1])^p_count_dict[pole]
+                temp_num_term *= Polynomial([-pole, 1])^p_count_dict[pole]
             end
         end
         r_poly += temp_num_term*r[resid_idx]
     end
-    k_poly = Poly(k)*den_poly
+    k_poly = Polynomial(k)*den_poly
     num_poly = k_poly+r_poly
     return coeffs(num_poly), coeffs(den_poly)
 end
