@@ -4,6 +4,7 @@ module RationalFunctions
 
 using Compat
 using Polynomials
+using LinearAlgebra
 using RecipesBase
 
 # Import conversion and promotion functions for overloading
@@ -26,13 +27,14 @@ import Base: one, zero
 import Base: isapprox, hash, isequal, transpose, conj
 
 # Import mathematical operations for overloading
-import Base: +, .+, -, .-, *, .*, dot, inv, /, ./, ==
+import Base: +, -, *, inv, /, ==, ^
+import LinearAlgebra: dot
 
 # Import functions from Polynomials
-import Polynomials: coeffs, degree, roots, variable, Poly
+import Polynomials: coeffs, degree, derivative, roots, variable, Polynomial
 
 # Import num/den-type of functions
-import Base: num, den, zeros, reduce
+import Base: numerator, denominator, zeros, reduce
 
 # Export only the useful functions
 export  RationalFunction,
